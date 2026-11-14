@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   AlertCircle,
   RotateCcw,
+  Pencil,
 } from 'lucide-react';
 
 interface Product {
@@ -82,6 +83,15 @@ export default function Home() {
   const [newProductQuantity, setNewProductQuantity] = useState('0');
   const [newProductMinStock, setNewProductMinStock] = useState('5');
   const [newProductUnit, setNewProductUnit] = useState('ถุง');
+
+  // Edit Product Form
+  const [isEditProductOpen, setIsEditProductOpen] = useState(false);
+  const [editProductId, setEditProductId] = useState('');
+  const [editProductName, setEditProductName] = useState('');
+  const [editProductCategory, setEditProductCategory] = useState('น้ำ');
+  const [editProductQuantity, setEditProductQuantity] = useState('0');
+  const [editProductMinStock, setEditProductMinStock] = useState('5');
+  const [editProductUnit, setEditProductUnit] = useState('ถุง');
 
   // Cash State
   const [cashTransactions, setCashTransactions] = useState<CashTransaction[]>([]);
@@ -202,6 +212,49 @@ export default function Home() {
         fetchProducts();
       } else {
         showAlert('error', data.error || 'เกิดข้อผิดพลาด');
+      }
+    } catch (e: any) {
+      showAlert('error', e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Open Edit Product Modal
+  const handleOpenEditProduct = (p: Product) => {
+    setEditProductId(p.id);
+    setEditProductName(p.name);
+    setEditProductCategory(p.category);
+    setEditProductQuantity(String(p.quantity));
+    setEditProductMinStock(String(p.minStock));
+    setEditProductUnit(p.unit);
+    setIsEditProductOpen(true);
+  };
+
+  // Handle Update Product
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editProductId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/products/${editProductId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editProductName,
+          category: editProductCategory,
+          quantity: editProductQuantity,
+          minStock: editProductMinStock,
+          unit: editProductUnit,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showAlert('success', `แก้ไข "${editProductName}" สำเร็จ`);
+        setIsEditProductOpen(false);
+        fetchProducts();
+      } else {
+        showAlert('error', data.error || 'เกิดข้อผิดพลาดในการแก้ไข');
       }
     } catch (e: any) {
       showAlert('error', e.message);
@@ -553,9 +606,18 @@ export default function Home() {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
-                              {item.name}
-                            </h3>
+                            <div className="flex items-center gap-1.5">
+                              <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
+                                {item.name}
+                              </h3>
+                              <button
+                                onClick={() => handleOpenEditProduct(item)}
+                                className="p-0.5 text-[#a89587] hover:text-[#c85a2b] shrink-0"
+                                title="แก้ไขชื่อ/หน่วย"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </button>
+                            </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5efe6] text-[#785741] font-medium">
                                 {item.category}
@@ -618,9 +680,18 @@ export default function Home() {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
-                              {item.name}
-                            </h3>
+                            <div className="flex items-center gap-1.5">
+                              <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
+                                {item.name}
+                              </h3>
+                              <button
+                                onClick={() => handleOpenEditProduct(item)}
+                                className="p-0.5 text-[#a89587] hover:text-[#c85a2b] shrink-0"
+                                title="แก้ไขชื่อ/หน่วย"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </button>
+                            </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5efe6] text-[#785741] font-medium">
                                 {item.category}
@@ -693,9 +764,18 @@ export default function Home() {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
-                            {item.name}
-                          </h3>
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
+                              {item.name}
+                            </h3>
+                            <button
+                              onClick={() => handleOpenEditProduct(item)}
+                              className="p-0.5 text-[#a89587] hover:text-[#c85a2b] shrink-0"
+                              title="แก้ไขชื่อ/หน่วย"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          </div>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5efe6] text-[#785741] font-medium">
                               {item.category}
@@ -779,9 +859,18 @@ export default function Home() {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
-                            {item.name}
-                          </h3>
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
+                              {item.name}
+                            </h3>
+                            <button
+                              onClick={() => handleOpenEditProduct(item)}
+                              className="p-0.5 text-[#a89587] hover:text-[#c85a2b] shrink-0"
+                              title="แก้ไขชื่อ/หน่วย"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          </div>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5efe6] text-[#785741] font-medium">
                               {item.category}
@@ -842,6 +931,14 @@ export default function Home() {
                           >
                             <Minus className="w-3 h-3" />
                             <span>เบิก</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleOpenEditProduct(item)}
+                            className="p-1 text-[#8a7263] hover:text-[#c85a2b] active:scale-90"
+                            title="แก้ไขสินค้า"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
                           </button>
 
                           <button
@@ -1134,6 +1231,111 @@ export default function Home() {
                   className="flex-1 py-2 rounded-lg bg-[#c85a2b] text-white text-xs font-bold"
                 >
                   {loading ? 'กำลังบันทึก...' : 'บันทึก'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL: แก้ไขข้อมูลสินค้า */}
+      {/* ========================================================= */}
+      {isEditProductOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-2xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-xl p-4 max-w-md w-full shadow-2xl animate-in slide-in-from-bottom-5">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-bold text-[#2c1a0e] flex items-center gap-1.5">
+                <Pencil className="w-4 h-4 text-[#c85a2b]" />
+                <span>แก้ไขข้อมูลสินค้า</span>
+              </h2>
+              <button onClick={() => setIsEditProductOpen(false)} className="p-1 text-[#8a7263]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateProduct} className="space-y-2.5">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#6e5849] mb-0.5">ชื่อสินค้า</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="เช่น ชาใต้ 75%"
+                  value={editProductName}
+                  onChange={(e) => setEditProductName(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs font-semibold text-[#2c1a0e]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#6e5849] mb-0.5">หมวดหมู่</label>
+                  <select
+                    value={editProductCategory}
+                    onChange={(e) => setEditProductCategory(e.target.value)}
+                    className="w-full px-2 py-1.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs"
+                  >
+                    {['น้ำ', 'นม', 'ท็อปปิ้ง', 'แก้ว', 'ฝาปิด', 'เซ็ตพร้อมดื่ม', 'หลอด', 'ถุงใส่แก้ว', 'ไซรัป', 'เมนูเพิ่มเติม', 'เครื่องดื่มในตู้', 'อุปกรณ์', 'ทั่วไป'].map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#6e5849] mb-0.5">หน่วยนับ</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ถุง, ขวด, ใบ, กล่อง"
+                    value={editProductUnit}
+                    onChange={(e) => setEditProductUnit(e.target.value)}
+                    className="w-full px-2 py-1.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#6e5849] mb-0.5">จำนวนคงเหลือ</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={editProductQuantity}
+                    onChange={(e) => setEditProductQuantity(e.target.value)}
+                    className="w-full px-2.5 py-1.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#6e5849] mb-0.5">จุดเตือนขั้นต่ำ</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={editProductMinStock}
+                    onChange={(e) => setEditProductMinStock(e.target.value)}
+                    className="w-full px-2.5 py-1.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProductOpen(false)}
+                  className="flex-1 py-2 rounded-lg border border-[#ebd5b3] text-[#6e5849] text-xs font-semibold"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 py-2 rounded-lg bg-[#c85a2b] text-white text-xs font-bold shadow-2xs hover:bg-[#b04e22] active:scale-95 transition-all"
+                >
+                  {loading ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
                 </button>
               </div>
             </form>
