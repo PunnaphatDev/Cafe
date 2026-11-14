@@ -9,11 +9,7 @@ import {
   Plus,
   Minus,
   Search,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
   Coins,
-  ArrowDownRight,
   Trash2,
   X,
 } from 'lucide-react';
@@ -55,7 +51,7 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchStock, setSearchStock] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
-  // ตัวกรอง Dashboard: รวม "ควรเติม / หมด" ไว้ด้วยกัน แต่แยกสถานะข้างใน
+  // ตัวกรอง Dashboard: รวม "ควรเติม / หมด" ไว้ด้วยกัน
   const [dashboardFilter, setDashboardFilter] = useState<'ALL' | 'NEED_REFILL' | 'NORMAL'>('NEED_REFILL');
 
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
@@ -263,7 +259,7 @@ export default function Home() {
   const outOfStockItems = products.filter(p => p.quantity === 0);
   const lowStockItems = products.filter(p => p.quantity > 0 && p.quantity <= p.minStock);
   const normalStockItems = products.filter(p => p.quantity > p.minStock);
-  const allRefillItems = [...outOfStockItems, ...lowStockItems]; // รวม หมด + ควรเติม
+  const allRefillItems = [...outOfStockItems, ...lowStockItems];
 
   return (
     <div className="min-h-screen bg-[#faf7f2] flex flex-col font-sans max-w-full overflow-x-hidden pb-20">
@@ -318,11 +314,6 @@ export default function Home() {
                 : 'bg-[#fdf2f2] border-[#f5c6cb] text-[#842029]'
             }`}
           >
-            {alertMsg.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-            ) : (
-              <XCircle className="w-4 h-4 shrink-0 text-rose-600" />
-            )}
             <span>{alertMsg.text}</span>
           </div>
         </div>
@@ -371,7 +362,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 2. สรุปสถานะสต็อก: รวม "ควรเติม / หมด" ไว้ด้วยกัน แต่แยกป้ายชัดเจน */}
+            {/* 2. สรุปสถานะสต็อก: ไม่มีไอคอนในปุ่มและป้าย */}
             <div className="bg-white p-2.5 rounded-2xl border border-[#ebd5b3]/70 shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#2c1a0e] flex items-center gap-1.5">
@@ -383,7 +374,7 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* 3 ตัวกรอง: ควรเติม/หมด (รวม) | ยังมีอยู่ | ทั้งหมด */}
+              {/* 3 ตัวกรอง (ไม่มีไอคอน) */}
               <div className="grid grid-cols-3 gap-1.5">
                 <button
                   onClick={() => setDashboardFilter('NEED_REFILL')}
@@ -393,7 +384,7 @@ export default function Home() {
                       : 'border-amber-200 bg-amber-50 text-amber-900'
                   }`}
                 >
-                  ⚠️ ควรเติม/หมด ({allRefillItems.length})
+                  ควรเติม / หมด ({allRefillItems.length})
                 </button>
 
                 <button
@@ -404,7 +395,7 @@ export default function Home() {
                       : 'border-emerald-200 bg-emerald-50 text-emerald-800'
                   }`}
                 >
-                  🟢 ยังมีอยู่ ({normalStockItems.length})
+                  ยังมีอยู่ ({normalStockItems.length})
                 </button>
 
                 <button
@@ -420,13 +411,12 @@ export default function Home() {
               </div>
             </div>
 
-            {/* รายการสินค้า: แสดงแยกส่วน หมด / ควรเติม / ยังมีอยู่ ให้เห็นชัดเจน */}
+            {/* รายการสินค้า: ไม่มีไอคอน/จุดในป้ายสถานะ */}
             <div className="space-y-3">
-              {/* กลุ่ม 1: สินค้าที่หมดสต็อก (ถ้ามี และอยู่ในโหมด NEED_REFILL หรือ ALL) */}
+              {/* กลุ่ม 1: สินค้าหมด */}
               {(dashboardFilter === 'NEED_REFILL' || dashboardFilter === 'ALL') && outOfStockItems.length > 0 && (
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5 px-1">
-                    <span className="w-2 h-2 rounded-full bg-rose-600"></span>
+                  <div className="flex items-center gap-1 px-1">
                     <span className="text-xs font-bold text-rose-800">
                       หมดสต็อก ({outOfStockItems.length} รายการ)
                     </span>
@@ -455,7 +445,7 @@ export default function Home() {
                           </div>
 
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
-                            ● หมด
+                            หมด
                           </span>
                         </div>
 
@@ -488,11 +478,10 @@ export default function Home() {
                 </div>
               )}
 
-              {/* กลุ่ม 2: สินค้าที่ควรเติม (Low Stock) */}
+              {/* กลุ่ม 2: สินค้าควรเติม */}
               {(dashboardFilter === 'NEED_REFILL' || dashboardFilter === 'ALL') && lowStockItems.length > 0 && (
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5 px-1">
-                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <div className="flex items-center gap-1 px-1">
                     <span className="text-xs font-bold text-amber-900">
                       ควรเติม ({lowStockItems.length} รายการ)
                     </span>
@@ -521,7 +510,7 @@ export default function Home() {
                           </div>
 
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900">
-                            ● ควรเติม
+                            ควรเติม
                           </span>
                         </div>
 
@@ -559,18 +548,16 @@ export default function Home() {
               {/* ข้อความแจ้งเตือนเมื่อไม่มีของที่ต้องเติม */}
               {dashboardFilter === 'NEED_REFILL' && allRefillItems.length === 0 && (
                 <div className="bg-white py-10 rounded-2xl text-center border border-emerald-200 bg-emerald-50/20 px-4">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto mb-1.5" />
-                  <p className="text-xs font-bold text-emerald-800">สต็อกครบพร้อมขายทุกตัว!</p>
+                  <p className="text-xs font-bold text-emerald-800">สต็อกครบพร้อมขายทุกตัว</p>
                   <p className="text-[10px] text-emerald-700/80 mt-0.5">ไม่มีสินค้าที่หมดหรือควรเติมในตอนนี้</p>
                 </div>
               )}
 
-              {/* กลุ่ม 3: สินค้าที่ยังมีอยู่ (Normal) */}
+              {/* กลุ่ม 3: สินค้าที่ยังมีอยู่ */}
               {(dashboardFilter === 'NORMAL' || dashboardFilter === 'ALL') && normalStockItems.length > 0 && (
                 <div className="space-y-1.5">
                   {dashboardFilter === 'ALL' && (
-                    <div className="flex items-center gap-1.5 px-1 pt-1">
-                      <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                    <div className="flex items-center gap-1 px-1 pt-1">
                       <span className="text-xs font-bold text-emerald-800">
                         ยังมีอยู่ ({normalStockItems.length} รายการ)
                       </span>
@@ -598,7 +585,7 @@ export default function Home() {
                         </div>
 
                         <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800">
-                          ● ยังมีอยู่
+                          ยังมีอยู่
                         </span>
                       </div>
 
@@ -612,7 +599,7 @@ export default function Home() {
                         </div>
 
                         <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                          ✓ พร้อมขาย
+                          พร้อมขาย
                         </span>
                       </div>
                     </div>
@@ -624,7 +611,7 @@ export default function Home() {
         )}
 
         {/* ========================================================= */}
-        {/* TAB 2: คลังสต็อก (สำหรับเบิกของ / เติมของ / แก้ไขสต็อกเต็มรูปแบบ) */}
+        {/* TAB 2: คลังสต็อก (ไม่มีไอคอนในป้ายสถานะ) */}
         {/* ========================================================= */}
         {activeTab === 'stock' && (
           <div className="space-y-2">
@@ -686,15 +673,15 @@ export default function Home() {
 
                         {isOut ? (
                           <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-700 leading-none">
-                            ● หมด
+                            หมด
                           </span>
                         ) : isLow ? (
                           <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 leading-none">
-                            ● ควรเติม
+                            ควรเติม
                           </span>
                         ) : (
                           <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 leading-none">
-                            ● ยังมีอยู่
+                            ยังมีอยู่
                           </span>
                         )}
                       </div>
