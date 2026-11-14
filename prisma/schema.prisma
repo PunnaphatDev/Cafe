@@ -20,6 +20,8 @@ model Product {
   updatedAt   DateTime   @updatedAt
   stockLogs   StockLog[]
 
+  @@index([isActive, category])
+  @@index([name])
   @@map("products")
 }
 
@@ -37,6 +39,8 @@ model StockLog {
 
   product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  @@index([productId, createdAt])
+  @@index([createdAt])
   @@map("stock_logs")
 }
 
@@ -53,6 +57,9 @@ model CashTransaction {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([isActive, isClosed, date])
+  @@index([type, isActive])
+  @@index([date])
   @@map("cash_transactions")
 }
 
@@ -65,5 +72,6 @@ model DailyReset {
   resetBy     String?  @default("Staff")
   createdAt   DateTime @default(now())
 
+  @@index([date])
   @@map("daily_resets")
 }

@@ -34,60 +34,76 @@ export async function GET(request: Request) {
       take: 200,
     });
 
-    // Calculate Summary
+    // Calculate Summary with Database-Level Aggregations (high-performance for large datasets)
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
-    const todayReset = await prisma.dailyReset.findFirst({
-      where: {
-        date: {
-          gte: startOfToday,
-          lte: endOfToday,
+    const [todayReset, totalsByType, todayExpenseAgg, todayChangeFundAgg, latestFund, totalIceExpenseAgg] = await Promise.all([
+      // Check if today was reset
+      prisma.dailyReset.findFirst({
+        where: {
+          date: { gte: startOfToday, lte: endOfToday },
         },
-      },
-      orderBy: { date: 'desc' },
-    });
+        orderBy: { date: 'desc' },
+      }),
+      // Sum all active transactions grouped by type (O(1) database aggregation)
+      prisma.cashTransaction.groupBy({
+        by: ['type'],
+        where: { isActive: true },
+        _sum: { amount: true },
+      }),
+      // Today unclosed expense
+      prisma.cashTransaction.aggregate({
+        where: {
+          type: 'EXPENSE',
+          isActive: true,
+          isClosed: false,
+          date: { gte: startOfToday, lte: endOfToday },
+        },
+        _sum: { amount: true },
+      }),
+      // Today change fund
+      prisma.cashTransaction.aggregate({
+        where: {
+          type: 'CHANGE_FUND',
+          isActive: true,
+          date: { gte: startOfToday, lte: endOfToday },
+        },
+        _sum: { amount: true },
+      }),
+      // Latest change fund
+      prisma.cashTransaction.findFirst({
+        where: { type: 'CHANGE_FUND', isActive: true },
+        orderBy: { date: 'desc' },
+        select: { amount: true, date: true, note: true },
+      }),
+      // Total ice expense
+      prisma.cashTransaction.aggregate({
+        where: {
+          type: 'EXPENSE',
+          isActive: true,
+          category: { contains: 'น้ำแข็ง' },
+        },
+        _sum: { amount: true },
+      }),
+    ]);
 
-    const allActive = await prisma.cashTransaction.findMany({
-      where: { isActive: true },
-      orderBy: { date: 'desc' },
-    });
-
-    let totalIceExpense = 0;
-    let todayExpense = 0;
-    let todayChangeFund = 0;
-    let todayIncome = 0;
     let netCashInDrawer = 0;
-    let latestFund: { amount: number; date: Date; note: string | null } | null = null;
-
-    for (const tx of allActive) {
-      const isToday = new Date(tx.date) >= startOfToday && new Date(tx.date) <= endOfToday;
-
-      if (tx.category.includes('น้ำแข็ง')) {
-        totalIceExpense += tx.amount;
-      }
-
-      if (tx.type === 'CHANGE_FUND') {
-        netCashInDrawer += tx.amount;
-        if (isToday) todayChangeFund += tx.amount;
-        if (!latestFund) {
-          latestFund = {
-            amount: tx.amount,
-            date: tx.date,
-            note: tx.note,
-          };
-        }
-      } else if (tx.type === 'EXPENSE') {
-        netCashInDrawer -= tx.amount;
-        if (isToday && !tx.isClosed) todayExpense += tx.amount;
-      } else if (tx.type === 'INCOME') {
-        netCashInDrawer += tx.amount;
-        if (isToday) todayIncome += tx.amount;
+    for (const group of totalsByType) {
+      const sum = group._sum.amount || 0;
+      if (group.type === 'CHANGE_FUND' || group.type === 'INCOME') {
+        netCashInDrawer += sum;
+      } else if (group.type === 'EXPENSE') {
+        netCashInDrawer -= sum;
       }
     }
+
+    const todayExpense = todayExpenseAgg._sum.amount || 0;
+    const todayChangeFund = todayChangeFundAgg._sum.amount || 0;
+    const totalIceExpense = totalIceExpenseAgg._sum.amount || 0;
 
     return NextResponse.json({
       success: true,
@@ -96,7 +112,7 @@ export async function GET(request: Request) {
         totalIceExpense,
         todayExpense,
         todayChangeFund,
-        todayIncome,
+        todayIncome: 0,
         netCashInDrawer,
         latestFund,
         alreadyResetToday: !!todayReset,

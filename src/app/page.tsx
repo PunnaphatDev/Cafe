@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import {
   ClipboardCheck,
@@ -67,6 +67,7 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchStock, setSearchStock] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
+  const [visibleStockCount, setVisibleStockCount] = useState(50);
   // ตัวกรอง Dashboard: รวม "ควรเติม / หมด" ไว้ด้วยกัน
   const [dashboardFilter, setDashboardFilter] = useState<'ALL' | 'NEED_REFILL' | 'NORMAL'>('NEED_REFILL');
 
@@ -186,6 +187,7 @@ export default function Home() {
   useEffect(() => {
     if (activeTab === 'stock' || activeTab === 'dashboard') fetchProducts();
     if (activeTab === 'cash') fetchCash();
+    setVisibleStockCount(50);
   }, [activeTab, searchStock, selectedCategory, searchCash, showArchivedCash]);
 
   // Handle Add Product
@@ -407,11 +409,14 @@ export default function Home() {
     });
   };
 
-  // แยกกลุ่ม: หมด (Out), ควรเติม (Low), ยังมีอยู่ (Normal)
-  const outOfStockItems = products.filter(p => p.quantity === 0);
-  const lowStockItems = products.filter(p => p.quantity > 0 && p.quantity <= p.minStock);
-  const normalStockItems = products.filter(p => p.quantity > p.minStock);
-  const allRefillItems = [...outOfStockItems, ...lowStockItems];
+  // Memoized stock groups for high performance with large datasets
+  const outOfStockItems = useMemo(() => products.filter((p) => p.quantity === 0), [products]);
+  const lowStockItems = useMemo(
+    () => products.filter((p) => p.quantity > 0 && p.quantity <= p.minStock),
+    [products]
+  );
+  const normalStockItems = useMemo(() => products.filter((p) => p.quantity > p.minStock), [products]);
+  const allRefillItems = useMemo(() => [...outOfStockItems, ...lowStockItems], [outOfStockItems, lowStockItems]);
 
   return (
     <div className="min-h-screen bg-[#faf7f2] flex flex-col font-sans max-w-full overflow-x-hidden pb-20">
@@ -848,111 +853,125 @@ export default function Home() {
                   ไม่พบรายการสินค้า
                 </div>
               ) : (
-                products.map((item) => {
-                  const isOut = item.quantity === 0;
-                  const isLow = item.quantity > 0 && item.quantity <= item.minStock;
+                <>
+                  {products.slice(0, visibleStockCount).map((item) => {
+                    const isOut = item.quantity === 0;
+                    const isLow = item.quantity > 0 && item.quantity <= item.minStock;
 
-                  return (
-                    <div
-                      key={item.id}
-                      className="bg-white rounded-xl p-2.5 border border-[#ebd5b3]/70 shadow-2xs hover:border-[#c85a2b]/40 transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
-                              {item.name}
-                            </h3>
+                    return (
+                      <div
+                        key={item.id}
+                        className="bg-white rounded-xl p-2.5 border border-[#ebd5b3]/70 shadow-2xs hover:border-[#c85a2b]/40 transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
+                                {item.name}
+                              </h3>
+                              <button
+                                onClick={() => handleOpenEditProduct(item)}
+                                className="p-0.5 text-[#a89587] hover:text-[#c85a2b] shrink-0"
+                                title="แก้ไขชื่อ/หน่วย"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5efe6] text-[#785741] font-medium">
+                                {item.category}
+                              </span>
+                              <span className="text-[9px] text-[#9c8475]">
+                                เตือน: {item.minStock} {item.unit}
+                              </span>
+                            </div>
+                          </div>
+
+                          {isOut ? (
+                            <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-700 leading-none">
+                              หมด
+                            </span>
+                          ) : isLow ? (
+                            <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 leading-none">
+                              ควรเติม
+                            </span>
+                          ) : (
+                            <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 leading-none">
+                              ยังมีอยู่
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-2 pt-1.5 border-t border-[#f5ecde] flex items-center justify-between gap-2">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-base font-extrabold text-[#2c1a0e] leading-none">
+                              {item.quantity}
+                            </span>
+                            <span className="text-[11px] font-medium text-[#8a7263]">
+                              {item.unit}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() => {
+                                setSelectedProduct(item);
+                                setAdjustAction('IN');
+                                setAdjustQty('1');
+                                setIsAdjustStockOpen(true);
+                              }}
+                              className="px-2.5 py-1 rounded-md bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 whitespace-nowrap shadow-2xs"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>เติม</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setSelectedProduct(item);
+                                setAdjustAction('OUT');
+                                setAdjustQty('1');
+                                setIsAdjustStockOpen(true);
+                              }}
+                              className="px-2.5 py-1 rounded-md bg-[#c85a2b] active:bg-[#b04e22] text-white font-bold text-xs flex items-center gap-1 whitespace-nowrap shadow-2xs"
+                            >
+                              <Minus className="w-3 h-3" />
+                              <span>เบิก</span>
+                            </button>
+
                             <button
                               onClick={() => handleOpenEditProduct(item)}
-                              className="p-0.5 text-[#a89587] hover:text-[#c85a2b] shrink-0"
-                              title="แก้ไขชื่อ/หน่วย"
+                              className="p-1 text-[#8a7263] hover:text-[#c85a2b] active:scale-90"
+                              title="แก้ไขสินค้า"
                             >
-                              <Pencil className="w-3 h-3" />
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteProduct(item.id, item.name)}
+                              className="p-1 text-[#cbb6a8] hover:text-rose-600 active:scale-90"
+                              title="ลบ"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5efe6] text-[#785741] font-medium">
-                              {item.category}
-                            </span>
-                            <span className="text-[9px] text-[#9c8475]">
-                              เตือน: {item.minStock} {item.unit}
-                            </span>
-                          </div>
-                        </div>
-
-                        {isOut ? (
-                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-700 leading-none">
-                            หมด
-                          </span>
-                        ) : isLow ? (
-                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 leading-none">
-                            ควรเติม
-                          </span>
-                        ) : (
-                          <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 leading-none">
-                            ยังมีอยู่
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-2 pt-1.5 border-t border-[#f5ecde] flex items-center justify-between gap-2">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-base font-extrabold text-[#2c1a0e] leading-none">
-                            {item.quantity}
-                          </span>
-                          <span className="text-[11px] font-medium text-[#8a7263]">
-                            {item.unit}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            onClick={() => {
-                              setSelectedProduct(item);
-                              setAdjustAction('IN');
-                              setAdjustQty('1');
-                              setIsAdjustStockOpen(true);
-                            }}
-                            className="px-2.5 py-1 rounded-md bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 whitespace-nowrap shadow-2xs"
-                          >
-                            <Plus className="w-3 h-3" />
-                            <span>เติม</span>
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setSelectedProduct(item);
-                              setAdjustAction('OUT');
-                              setAdjustQty('1');
-                              setIsAdjustStockOpen(true);
-                            }}
-                            className="px-2.5 py-1 rounded-md bg-[#c85a2b] active:bg-[#b04e22] text-white font-bold text-xs flex items-center gap-1 whitespace-nowrap shadow-2xs"
-                          >
-                            <Minus className="w-3 h-3" />
-                            <span>เบิก</span>
-                          </button>
-
-                          <button
-                            onClick={() => handleOpenEditProduct(item)}
-                            className="p-1 text-[#8a7263] hover:text-[#c85a2b] active:scale-90"
-                            title="แก้ไขสินค้า"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            onClick={() => handleDeleteProduct(item.id, item.name)}
-                            className="p-1 text-[#cbb6a8] hover:text-rose-600 active:scale-90"
-                            title="ลบ"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
                         </div>
                       </div>
+                    );
+                  })}
+
+                  {products.length > visibleStockCount && (
+                    <div className="pt-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setVisibleStockCount((prev) => prev + 50)}
+                        className="w-full py-2 bg-white hover:bg-[#faf7f2] border border-[#ebd5b3] text-[#c85a2b] font-bold text-xs rounded-xl shadow-2xs active:scale-95 transition-all"
+                      >
+                        แสดงเพิ่มอีก ({products.length - visibleStockCount} รายการ)
+                      </button>
                     </div>
-                  );
-                })
+                  )}
+                </>
               )}
             </div>
           </div>
