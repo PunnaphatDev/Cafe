@@ -389,7 +389,7 @@ export default function Home() {
               className="px-2.5 py-1.5 bg-[#b83b3b] active:scale-95 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ บันทึกเงิน</span>
+              <span>บันทึกเงิน</span>
             </button>
           ) : (
             <button
@@ -397,7 +397,7 @@ export default function Home() {
               className="px-2.5 py-1.5 bg-[#c85a2b] active:scale-95 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ สินค้าใหม่</span>
+              <span>สินค้าใหม่</span>
             </button>
           )}
         </div>
