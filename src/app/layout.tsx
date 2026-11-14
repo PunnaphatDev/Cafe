@@ -6,11 +6,11 @@ export const metadata: Metadata = {
   description: "ระบบจัดการสต็อกสินค้าและเงินสดร้าน AUSTIN Cat Hotel & Cafe",
   icons: {
     icon: [
-      { url: "/favicon.ico" },
-      { url: "/icon.png", type: "image/png" },
+      { url: "/icon.png?v=2", type: "image/png" },
+      { url: "/favicon.ico?v=2" },
     ],
     apple: [
-      { url: "/apple-icon.png" },
+      { url: "/apple-icon.png?v=2" },
     ],
   },
 };
