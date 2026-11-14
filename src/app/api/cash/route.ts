@@ -38,6 +38,7 @@ export async function GET(request: Request) {
 
     const allActive = await prisma.cashTransaction.findMany({
       where: { isActive: true },
+      orderBy: { date: 'desc' },
     });
 
     let totalIceExpense = 0;
@@ -45,6 +46,7 @@ export async function GET(request: Request) {
     let todayChangeFund = 0;
     let todayIncome = 0;
     let netCashInDrawer = 0;
+    let latestFund: { amount: number; date: Date; note: string | null } | null = null;
 
     for (const tx of allActive) {
       const isToday = new Date(tx.date) >= startOfToday && new Date(tx.date) <= endOfToday;
@@ -53,12 +55,19 @@ export async function GET(request: Request) {
         totalIceExpense += tx.amount;
       }
 
-      if (tx.type === 'EXPENSE') {
-        netCashInDrawer -= tx.amount;
-        if (isToday) todayExpense += tx.amount;
-      } else if (tx.type === 'CHANGE_FUND') {
+      if (tx.type === 'CHANGE_FUND') {
         netCashInDrawer += tx.amount;
         if (isToday) todayChangeFund += tx.amount;
+        if (!latestFund) {
+          latestFund = {
+            amount: tx.amount,
+            date: tx.date,
+            note: tx.note,
+          };
+        }
+      } else if (tx.type === 'EXPENSE') {
+        netCashInDrawer -= tx.amount;
+        if (isToday) todayExpense += tx.amount;
       } else if (tx.type === 'INCOME') {
         netCashInDrawer += tx.amount;
         if (isToday) todayIncome += tx.amount;
@@ -74,6 +83,7 @@ export async function GET(request: Request) {
         todayChangeFund,
         todayIncome,
         netCashInDrawer,
+        latestFund,
       },
     });
   } catch (error: any) {

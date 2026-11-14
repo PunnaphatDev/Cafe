@@ -41,6 +41,11 @@ interface CashSummary {
   todayChangeFund: number;
   todayIncome: number;
   netCashInDrawer: number;
+  latestFund?: {
+    amount: number;
+    date: string;
+    note?: string | null;
+  } | null;
 }
 
 export default function Home() {
@@ -328,37 +333,48 @@ export default function Home() {
         {/* ========================================================= */}
         {activeTab === 'dashboard' && (
           <div className="space-y-2.5">
-            {/* 1. สรุปค่าใช้จ่าย & เงินสดรายวัน */}
-            <div className="bg-white p-2.5 rounded-2xl border border-[#ebd5b3]/70 shadow-2xs space-y-1.5">
+            {/* 1. สรุปเงินในเคาน์เตอร์ & รายจ่าย */}
+            <div className="bg-white p-2.5 rounded-2xl border border-[#ebd5b3]/70 shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#2c1a0e] flex items-center gap-1.5">
                   <Coins className="w-3.5 h-3.5 text-[#c85a2b]" />
-                  <span>ค่าใช้จ่าย & เงินสดรายวัน</span>
+                  <span>เงินเคาน์เตอร์ & รายจ่าย</span>
                 </span>
-                <span className="text-[10px] text-[#8a7263]">วันนี้</span>
+                <span className="text-[10px] text-[#8a7263]">ยอดจริงหน้าร้าน</span>
               </div>
 
+              {/* ยอดเงินคงเหลือในเคาน์เตอร์จริง (หลัก) */}
+              <div className="bg-[#faece5] p-2.5 rounded-xl border border-[#ebd5b3] flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold text-[#7d5032] block">เงินคงเหลือในเคาน์เตอร์:</span>
+                  <span className="text-[10px] text-[#8a7263]">
+                    {cashSummary.latestFund
+                      ? `เติมล่าสุด ฿${cashSummary.latestFund.amount.toLocaleString()}`
+                      : 'ใช้จ่ายจนหมดแล้วเบิกเพิ่ม'}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className={`text-base font-black ${cashSummary.netCashInDrawer < 500 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                    ฿{cashSummary.netCashInDrawer.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* สรุปรายจ่ายวันนี้ + เติมล่าสุด */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-[#fcfbf9] p-2 rounded-xl border border-[#f0e4d0]">
-                  <p className="text-[10px] text-emerald-800 leading-none">เงินเปิดร้าน</p>
-                  <p className="text-base font-bold text-emerald-700 mt-1">
-                    ฿{cashSummary.todayChangeFund.toLocaleString()}
-                  </p>
-                </div>
-
-                <div className="bg-[#fcfbf9] p-2 rounded-xl border border-[#f0e4d0]">
                   <p className="text-[10px] text-rose-800 leading-none">รายจ่ายวันนี้</p>
-                  <p className="text-base font-bold text-rose-600 mt-1">
+                  <p className="text-sm font-bold text-rose-600 mt-1">
                     ฿{cashSummary.todayExpense.toLocaleString()}
                   </p>
                 </div>
-              </div>
 
-              <div className="bg-[#faece5] px-2.5 py-1.5 rounded-xl border border-[#ebd5b3] flex items-center justify-between text-xs">
-                <span className="text-[11px] font-bold text-[#8a583a]">เงินในลิ้นชักสุทธิ:</span>
-                <span className="text-sm font-black text-[#2c1a0e]">
-                  ฿{(cashSummary.todayChangeFund - cashSummary.todayExpense).toLocaleString()}
-                </span>
+                <div className="bg-[#fcfbf9] p-2 rounded-xl border border-[#f0e4d0]">
+                  <p className="text-[10px] text-emerald-800 leading-none">เติมล่าสุด</p>
+                  <p className="text-sm font-bold text-emerald-700 mt-1">
+                    {cashSummary.latestFund ? `฿${cashSummary.latestFund.amount.toLocaleString()}` : '-'}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -741,14 +757,21 @@ export default function Home() {
         )}
 
         {/* ========================================================= */}
-        {/* TAB 3: เงินเปิดร้าน & รายจ่ายวันนี้ */}
+        {/* TAB 3: เงินเคาน์เตอร์ & รายจ่าย */}
         {/* ========================================================= */}
         {activeTab === 'cash' && (
           <div className="space-y-2">
-            <div className="bg-[#fceddf] px-3 py-2 rounded-xl border border-[#ebd5b3] flex items-center justify-between text-xs">
-              <span className="text-[11px] font-medium text-[#7d5032]">เงินสดในลิ้นชักสุทธิ:</span>
-              <span className="font-bold text-sm text-[#2c1a0e]">
-                ฿{(cashSummary.todayChangeFund - cashSummary.todayExpense).toLocaleString()}
+            <div className="bg-[#faece5] p-2.5 rounded-xl border border-[#ebd5b3] flex items-center justify-between text-xs">
+              <div>
+                <span className="text-[11px] font-bold text-[#7d5032] block">เงินคงเหลือในเคาน์เตอร์:</span>
+                <span className="text-[10px] text-[#8a7263]">
+                  {cashSummary.latestFund
+                    ? `เติมล่าสุด ฿${cashSummary.latestFund.amount.toLocaleString()}`
+                    : 'ใช้จ่ายจนหมดแล้วเบิกเพิ่ม'}
+                </span>
+              </div>
+              <span className="font-black text-base text-[#2c1a0e]">
+                ฿{cashSummary.netCashInDrawer.toLocaleString()}
               </span>
             </div>
 
@@ -774,7 +797,7 @@ export default function Home() {
                                 : 'bg-rose-50 text-rose-700'
                             }`}
                           >
-                            {isChangeFund ? 'เปิดร้าน' : 'จ่าย'}
+                            {isChangeFund ? 'เติมเงิน' : 'จ่าย'}
                           </span>
                           <span className="text-xs font-bold text-[#2c1a0e] truncate">
                             {tx.category}
@@ -849,7 +872,7 @@ export default function Home() {
             }`}
           >
             <DollarSign className="w-4 h-4" />
-            <span className="text-[10px]">เงินสด/ทอน</span>
+            <span className="text-[10px]">เงินเคาน์เตอร์</span>
           </button>
         </div>
       </nav>
@@ -1039,14 +1062,14 @@ export default function Home() {
       )}
 
       {/* ========================================================= */}
-      {/* MODAL: เงินเปิดร้าน / รายจ่าย */}
+      {/* MODAL: เติมเงินเคาน์เตอร์ / บันทึกรายจ่าย */}
       {/* ========================================================= */}
       {isAddCashOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-2xs flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-xl p-4 max-w-md w-full shadow-2xl animate-in slide-in-from-bottom-5">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-bold text-[#2c1a0e]">
-                {cashType === 'CHANGE_FUND' ? '🪙 เงินเปิดร้าน' : '💸 รายจ่ายวันนี้'}
+                {cashType === 'CHANGE_FUND' ? 'เติมเงินเคาน์เตอร์' : 'บันทึกรายจ่าย'}
               </h2>
               <button onClick={() => setIsAddCashOpen(false)} className="p-1 text-[#8a7263]">
                 <X className="w-4 h-4" />
@@ -1059,15 +1082,15 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     setCashType('CHANGE_FUND');
-                    setCashCategory('เงินทอนเปิดร้าน');
+                    setCashCategory('เติมเงินเคาน์เตอร์');
                   }}
-                  className={`py-1.5 rounded-lg text-xs font-bold border ${
+                  className={`py-1.5 rounded-lg text-xs font-bold border transition-all ${
                     cashType === 'CHANGE_FUND'
                       ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
                       : 'border-[#ebd5b3] text-[#8a7263]'
                   }`}
                 >
-                  🪙 เงินเปิดร้าน
+                  เติมเงินเคาน์เตอร์
                 </button>
 
                 <button
@@ -1076,15 +1099,21 @@ export default function Home() {
                     setCashType('EXPENSE');
                     setCashCategory('สั่งน้ำแข็ง');
                   }}
-                  className={`py-1.5 rounded-lg text-xs font-bold border ${
+                  className={`py-1.5 rounded-lg text-xs font-bold border transition-all ${
                     cashType === 'EXPENSE'
                       ? 'bg-rose-50 border-rose-400 text-rose-800'
                       : 'border-[#ebd5b3] text-[#8a7263]'
                   }`}
                 >
-                  💸 รายจ่ายวันนี้
+                  บันทึกรายจ่าย
                 </button>
               </div>
+
+              {cashType === 'CHANGE_FUND' && (
+                <div className="text-[10px] text-[#7d5032] bg-[#fdf8f4] p-2 rounded-lg border border-[#ebd5b3]">
+                  ใส่ยอดเงินก้อนที่เบิกมาเติมในเคาน์เตอร์ (ใช้จ่ายเรื่อยๆ จนหมดแล้วค่อยเติมใหม่)
+                </div>
+              )}
 
               {cashType === 'EXPENSE' && (
                 <div>
@@ -1130,7 +1159,7 @@ export default function Home() {
                   </div>
                 ) : cashType === 'CHANGE_FUND' ? (
                   <div className="grid grid-cols-3 gap-1.5 mt-1.5">
-                    {[1000, 1500, 2000].map((amt) => (
+                    {[1000, 2000, 3000].map((amt) => (
                       <button
                         key={amt}
                         type="button"
