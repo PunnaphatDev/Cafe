@@ -4,6 +4,15 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "AUSTIN Cat Hotel & Cafe | จัดการสต็อกและเงินสด",
   description: "ระบบจัดการสต็อกสินค้าและเงินสดร้าน AUSTIN Cat Hotel & Cafe",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png" },
+    ],
+  },
 };
 
 export default function RootLayout({
