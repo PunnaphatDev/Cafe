@@ -78,7 +78,7 @@ export default function Home() {
 
   // New Product Form
   const [newProductName, setNewProductName] = useState('');
-  const [newProductCategory, setNewProductCategory] = useState('เมล็ดกาแฟ');
+  const [newProductCategory, setNewProductCategory] = useState('น้ำ');
   const [newProductQuantity, setNewProductQuantity] = useState('0');
   const [newProductMinStock, setNewProductMinStock] = useState('5');
   const [newProductUnit, setNewProductUnit] = useState('ถุง');
@@ -754,12 +754,11 @@ export default function Home() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="py-1.5 px-2 bg-white border border-[#ebd5b3] rounded-lg text-xs font-medium text-[#6e5849] focus:outline-hidden"
               >
-                <option value="ทั้งหมด">ทุกหมวด</option>
-                <option value="เมล็ดกาแฟ">เมล็ดกาแฟ</option>
-                <option value="วัตถุดิบนม">วัตถุดิบนม</option>
-                <option value="ชาและผงเครื่องดื่ม">ชา/เครื่องดื่ม</option>
-                <option value="บรรจุภัณฑ์">บรรจุภัณฑ์</option>
-                <option value="ทั่วไป">ทั่วไป</option>
+                {['ทั้งหมด', 'น้ำ', 'นม', 'ท็อปปิ้ง', 'แก้ว', 'ฝาปิด', 'เซ็ตพร้อมดื่ม', 'หลอด', 'ถุงใส่แก้ว', 'ไซรัป', 'เมนูเพิ่มเติม', 'เครื่องดื่มในตู้', 'อุปกรณ์'].map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat === 'ทั้งหมด' ? 'ทุกหมวด' : cat}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -1074,11 +1073,11 @@ export default function Home() {
                     onChange={(e) => setNewProductCategory(e.target.value)}
                     className="w-full px-2 py-1.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs"
                   >
-                    <option value="เมล็ดกาแฟ">เมล็ดกาแฟ</option>
-                    <option value="วัตถุดิบนม">วัตถุดิบนม</option>
-                    <option value="ชาและผงเครื่องดื่ม">ชา/เครื่องดื่ม</option>
-                    <option value="บรรจุภัณฑ์">บรรจุภัณฑ์</option>
-                    <option value="ทั่วไป">ทั่วไป</option>
+                    {['น้ำ', 'นม', 'ท็อปปิ้ง', 'แก้ว', 'ฝาปิด', 'เซ็ตพร้อมดื่ม', 'หลอด', 'ถุงใส่แก้ว', 'ไซรัป', 'เมนูเพิ่มเติม', 'เครื่องดื่มในตู้', 'อุปกรณ์', 'ทั่วไป'].map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
