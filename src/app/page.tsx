@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 
 interface Product {
@@ -48,6 +49,12 @@ interface CashSummary {
     amount: number;
     date: string;
     note?: string | null;
+  } | null;
+  alreadyResetToday?: boolean;
+  todayResetInfo?: {
+    totalAmount: number;
+    itemCount: number;
+    date: string;
   } | null;
 }
 
@@ -86,6 +93,7 @@ export default function Home() {
     netCashInDrawer: 0,
   });
   const [searchCash, setSearchCash] = useState('');
+  const [showArchivedCash, setShowArchivedCash] = useState(false);
   const [isAddCashOpen, setIsAddCashOpen] = useState(false);
   const [cashType, setCashType] = useState<'CHANGE_FUND' | 'EXPENSE'>('EXPENSE');
   const [cashCategory, setCashCategory] = useState('สั่งน้ำแข็ง');
@@ -148,7 +156,8 @@ export default function Home() {
 
   const fetchCash = async () => {
     try {
-      const res = await fetch(`/api/cash?search=${encodeURIComponent(searchCash)}`);
+      const url = `/api/cash?search=${encodeURIComponent(searchCash)}${showArchivedCash ? '&includeClosed=true' : ''}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setCashTransactions(data.data);
@@ -167,7 +176,7 @@ export default function Home() {
   useEffect(() => {
     if (activeTab === 'stock' || activeTab === 'dashboard') fetchProducts();
     if (activeTab === 'cash') fetchCash();
-  }, [activeTab, searchStock, selectedCategory, searchCash]);
+  }, [activeTab, searchStock, selectedCategory, searchCash, showArchivedCash]);
 
   // Handle Add Product
   const handleCreateProduct = async (e: React.FormEvent) => {
@@ -314,6 +323,37 @@ export default function Home() {
     });
   };
 
+  // Handle Reset Daily Expenses (กดได้วันละ 1 ครั้ง)
+  const handleResetDailyExpenses = () => {
+    if (cashSummary.alreadyResetToday) {
+      showAlert('error', 'วันนี้ได้ทำการรีเซ็ทรายจ่ายไปแล้ว (สามารถกดได้วันละ 1 ครั้ง)');
+      return;
+    }
+
+    askConfirmation({
+      title: 'ยืนยันรีเซ็ทรายจ่ายประจำวัน',
+      message: `คุณต้องการสรุปและรีเซ็ทรายจ่ายประจำวัน (ยอดรวม ฿${cashSummary.todayExpense.toLocaleString()}) ใช่หรือไม่?\n\nรายการรายจ่ายวันนี้จะถูกปิดรอบเพื่อไม่ให้ข้อมูลรก และสามารถกดได้วันละ 1 ครั้ง`,
+      confirmText: 'ยืนยันรีเซ็ท',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          const res = await fetch('/api/cash/reset-daily', { method: 'POST' });
+          const data = await res.json();
+          if (data.success) {
+            showAlert('success', `รีเซ็ทรายจ่ายเรียบร้อย (฿${data.totalAmount.toLocaleString()})`);
+            fetchCash();
+          } else {
+            showAlert('error', data.error || 'เกิดข้อผิดพลาดในการรีเซ็ท');
+          }
+        } catch (e: any) {
+          showAlert('error', e.message);
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
+
   // แยกกลุ่ม: หมด (Out), ควรเติม (Low), ยังมีอยู่ (Normal)
   const outOfStockItems = products.filter(p => p.quantity === 0);
   const lowStockItems = products.filter(p => p.quantity > 0 && p.quantity <= p.minStock);
@@ -422,7 +462,14 @@ export default function Home() {
               {/* สรุปรายจ่ายวันนี้ + เติมล่าสุด */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-[#fcfbf9] p-2 rounded-xl border border-[#f0e4d0]">
-                  <p className="text-[10px] text-rose-800 leading-none">รายจ่ายวันนี้</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-rose-800 leading-none">รายจ่ายวันนี้</p>
+                    {cashSummary.alreadyResetToday && (
+                      <span className="text-[8px] bg-emerald-100 text-emerald-800 font-bold px-1 rounded leading-tight">
+                        รีเซ็ทแล้ว
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm font-bold text-rose-600 mt-1">
                     ฿{cashSummary.todayExpense.toLocaleString()}
                   </p>
@@ -820,6 +867,7 @@ export default function Home() {
         {/* ========================================================= */}
         {activeTab === 'cash' && (
           <div className="space-y-2">
+            {/* กล่องเงินคงเหลือเคาน์เตอร์ */}
             <div className="bg-[#faece5] p-2.5 rounded-xl border border-[#ebd5b3] flex items-center justify-between text-xs">
               <div>
                 <span className="text-[11px] font-bold text-[#7d5032] block">เงินคงเหลือในเคาน์เตอร์:</span>
@@ -832,6 +880,62 @@ export default function Home() {
               <span className="font-black text-base text-[#2c1a0e]">
                 ฿{cashSummary.netCashInDrawer.toLocaleString()}
               </span>
+            </div>
+
+            {/* แถบสรุปรายจ่ายวันนี้ + ปุ่มรีเซ็ทรายจ่ายประจำวัน */}
+            <div className="bg-white p-2.5 rounded-xl border border-[#ebd5b3]/70 shadow-2xs flex items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-rose-800 font-bold">รายจ่ายวันนี้:</span>
+                  <span className="text-sm font-black text-rose-600">
+                    ฿{cashSummary.todayExpense.toLocaleString()}
+                  </span>
+                </div>
+                {cashSummary.todayResetInfo ? (
+                  <p className="text-[9px] text-emerald-700 font-medium mt-0.5">
+                    ✓ รีเซ็ทแล้ว ฿{cashSummary.todayResetInfo.totalAmount.toLocaleString()} ({cashSummary.todayResetInfo.itemCount} รายการ)
+                  </p>
+                ) : (
+                  <p className="text-[9px] text-[#8a7263] mt-0.5">
+                    กดรีเซ็ทเมื่อสิ้นสุดวันเพื่อปิดยอด
+                  </p>
+                )}
+              </div>
+
+              {cashSummary.alreadyResetToday ? (
+                <button
+                  type="button"
+                  disabled
+                  className="px-2.5 py-1.5 bg-[#eefbf2] border border-[#a5d6a7] text-[#1e612f] rounded-lg text-xs font-bold flex items-center gap-1 opacity-90 cursor-not-allowed shadow-2xs"
+                  title="วันนี้ได้ทำการรีเซ็ทรายจ่ายไปแล้ว สามารถกดได้วันละ 1 ครั้ง"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>รีเซ็ทแล้ววันนี้</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResetDailyExpenses}
+                  className="px-2.5 py-1.5 bg-[#faece5] hover:bg-[#f3ded2] border border-[#d9825b] active:scale-95 text-[#a84419] rounded-lg text-xs font-bold flex items-center gap-1 shadow-2xs transition-all"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>รีเซ็ทรายจ่าย</span>
+                </button>
+              )}
+            </div>
+
+            {/* ส่วนหัวตารางรายการ และปุ่มดูประวัติที่ปิดรอบแล้ว */}
+            <div className="flex items-center justify-between px-1 pt-1">
+              <span className="text-xs font-bold text-[#2c1a0e]">
+                {showArchivedCash ? 'ประวัติรายการเงินทั้งหมด' : 'รายการปัจจุบัน'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowArchivedCash(!showArchivedCash)}
+                className="text-[10px] text-[#8a7263] hover:text-[#c85a2b] font-medium underline"
+              >
+                {showArchivedCash ? 'ดูเฉพาะปัจจุบัน' : '+ ดูประวัติที่รีเซ็ทแล้ว'}
+              </button>
             </div>
 
             <div className="space-y-1.5">

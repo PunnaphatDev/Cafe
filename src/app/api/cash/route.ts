@@ -8,7 +8,12 @@ export async function GET(request: Request) {
     const type = searchParams.get('type') || '';
     const category = searchParams.get('category') || '';
 
+    const showAll = searchParams.get('includeClosed') === 'true';
     const where: any = { isActive: true };
+
+    if (!showAll) {
+      where.isClosed = false;
+    }
 
     if (type && type !== 'ทั้งหมด') {
       where.type = type;
@@ -35,6 +40,16 @@ export async function GET(request: Request) {
 
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
+
+    const todayReset = await prisma.dailyReset.findFirst({
+      where: {
+        date: {
+          gte: startOfToday,
+          lte: endOfToday,
+        },
+      },
+      orderBy: { date: 'desc' },
+    });
 
     const allActive = await prisma.cashTransaction.findMany({
       where: { isActive: true },
@@ -67,7 +82,7 @@ export async function GET(request: Request) {
         }
       } else if (tx.type === 'EXPENSE') {
         netCashInDrawer -= tx.amount;
-        if (isToday) todayExpense += tx.amount;
+        if (isToday && !tx.isClosed) todayExpense += tx.amount;
       } else if (tx.type === 'INCOME') {
         netCashInDrawer += tx.amount;
         if (isToday) todayIncome += tx.amount;
@@ -84,6 +99,14 @@ export async function GET(request: Request) {
         todayIncome,
         netCashInDrawer,
         latestFund,
+        alreadyResetToday: !!todayReset,
+        todayResetInfo: todayReset
+          ? {
+              totalAmount: todayReset.totalAmount,
+              itemCount: todayReset.itemCount,
+              date: todayReset.date,
+            }
+          : null,
       },
     });
   } catch (error: any) {
