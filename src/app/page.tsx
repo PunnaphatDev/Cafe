@@ -16,7 +16,6 @@ import {
   ArrowDownRight,
   Trash2,
   X,
-  WalletCards,
 } from 'lucide-react';
 
 interface Product {
@@ -56,8 +55,8 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchStock, setSearchStock] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
-  // ตัวกรอง Dashboard: ทั้งหมด / 🔴 หมด / 🟡 ควรเติม / 🟢 ยังมีอยู่
-  const [dashboardStatusFilter, setDashboardStatusFilter] = useState<'ALL' | 'OUT' | 'LOW' | 'NORMAL'>('ALL');
+  // ตัวกรอง Dashboard: รวม "ควรเติม / หมด" ไว้ด้วยกัน แต่แยกสถานะข้างใน
+  const [dashboardFilter, setDashboardFilter] = useState<'ALL' | 'NEED_REFILL' | 'NORMAL'>('NEED_REFILL');
 
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isAdjustStockOpen, setIsAdjustStockOpen] = useState(false);
@@ -260,19 +259,11 @@ export default function Home() {
     }
   };
 
-  // Categorize Stock: 3 สถานะชัดเจน (หมด / ควรเติม / ยังมีอยู่)
+  // แยกกลุ่ม: หมด (Out), ควรเติม (Low), ยังมีอยู่ (Normal)
   const outOfStockItems = products.filter(p => p.quantity === 0);
   const lowStockItems = products.filter(p => p.quantity > 0 && p.quantity <= p.minStock);
   const normalStockItems = products.filter(p => p.quantity > p.minStock);
-
-  const displayedDashboardItems =
-    dashboardStatusFilter === 'OUT'
-      ? outOfStockItems
-      : dashboardStatusFilter === 'LOW'
-      ? lowStockItems
-      : dashboardStatusFilter === 'NORMAL'
-      ? normalStockItems
-      : products;
+  const allRefillItems = [...outOfStockItems, ...lowStockItems]; // รวม หมด + ควรเติม
 
   return (
     <div className="min-h-screen bg-[#faf7f2] flex flex-col font-sans max-w-full overflow-x-hidden pb-20">
@@ -342,11 +333,11 @@ export default function Home() {
       {/* ========================================================= */}
       <main className="max-w-md mx-auto px-3.5 py-2.5 w-full flex-1">
         {/* ========================================================= */}
-        {/* TAB 1: DASHBOARD (สรุปค่าใช้จ่ายรายวัน + สต็อก หมด/ควรเติม/ยังมีอยู่) */}
+        {/* TAB 1: DASHBOARD */}
         {/* ========================================================= */}
         {activeTab === 'dashboard' && (
           <div className="space-y-2.5">
-            {/* 1. สรุปค่าใช้จ่าย & การเงินรายวัน (กระชับ ดูง่าย) */}
+            {/* 1. สรุปค่าใช้จ่าย & เงินสดรายวัน */}
             <div className="bg-white p-2.5 rounded-2xl border border-[#ebd5b3]/70 shadow-2xs space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#2c1a0e] flex items-center gap-1.5">
@@ -356,7 +347,6 @@ export default function Home() {
                 <span className="text-[10px] text-[#8a7263]">วันนี้</span>
               </div>
 
-              {/* 2 กล่อง: เงินเปิดร้าน & รายจ่ายวันนี้ */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-[#fcfbf9] p-2 rounded-xl border border-[#f0e4d0]">
                   <p className="text-[10px] text-emerald-800 leading-none">เงินเปิดร้าน</p>
@@ -373,7 +363,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* เงินสดคงเหลือสุทธิ */}
               <div className="bg-[#faece5] px-2.5 py-1.5 rounded-xl border border-[#ebd5b3] flex items-center justify-between text-xs">
                 <span className="text-[11px] font-bold text-[#8a583a]">เงินในลิ้นชักสุทธิ:</span>
                 <span className="text-sm font-black text-[#2c1a0e]">
@@ -382,7 +371,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 2. สรุปสถานะสต็อก: ทั้งหมด / 🔴 หมด / 🟡 ควรเติม / 🟢 ยังมีอยู่ */}
+            {/* 2. สรุปสถานะสต็อก: รวม "ควรเติม / หมด" ไว้ด้วยกัน แต่แยกป้ายชัดเจน */}
             <div className="bg-white p-2.5 rounded-2xl border border-[#ebd5b3]/70 shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#2c1a0e] flex items-center gap-1.5">
@@ -394,79 +383,205 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* 4 ตัวกรองสถานะ: ทั้งหมด / หมด / ควรเติม / ยังมีอยู่ */}
-              <div className="grid grid-cols-4 gap-1">
+              {/* 3 ตัวกรอง: ควรเติม/หมด (รวม) | ยังมีอยู่ | ทั้งหมด */}
+              <div className="grid grid-cols-3 gap-1.5">
                 <button
-                  onClick={() => setDashboardStatusFilter('ALL')}
-                  className={`py-1.5 rounded-xl text-[11px] font-bold border transition-all text-center ${
-                    dashboardStatusFilter === 'ALL'
-                      ? 'bg-[#2c1a0e] text-white border-[#2c1a0e]'
-                      : 'border-[#ebd5b3] bg-[#faf7f2] text-[#6e5849]'
-                  }`}
-                >
-                  ทั้งหมด ({products.length})
-                </button>
-
-                <button
-                  onClick={() => setDashboardStatusFilter('OUT')}
-                  className={`py-1.5 rounded-xl text-[11px] font-bold border transition-all text-center ${
-                    dashboardStatusFilter === 'OUT'
-                      ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
-                      : 'border-rose-200 bg-rose-50 text-rose-800'
-                  }`}
-                >
-                  🔴 หมด ({outOfStockItems.length})
-                </button>
-
-                <button
-                  onClick={() => setDashboardStatusFilter('LOW')}
-                  className={`py-1.5 rounded-xl text-[11px] font-bold border transition-all text-center ${
-                    dashboardStatusFilter === 'LOW'
+                  onClick={() => setDashboardFilter('NEED_REFILL')}
+                  className={`py-1.5 rounded-xl text-xs font-bold border transition-all text-center ${
+                    dashboardFilter === 'NEED_REFILL'
                       ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
-                      : 'border-amber-200 bg-amber-50 text-amber-800'
+                      : 'border-amber-200 bg-amber-50 text-amber-900'
                   }`}
                 >
-                  🟡 ควรเติม ({lowStockItems.length})
+                  ⚠️ ควรเติม/หมด ({allRefillItems.length})
                 </button>
 
                 <button
-                  onClick={() => setDashboardStatusFilter('NORMAL')}
-                  className={`py-1.5 rounded-xl text-[11px] font-bold border transition-all text-center ${
-                    dashboardStatusFilter === 'NORMAL'
+                  onClick={() => setDashboardFilter('NORMAL')}
+                  className={`py-1.5 rounded-xl text-xs font-bold border transition-all text-center ${
+                    dashboardFilter === 'NORMAL'
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
                       : 'border-emerald-200 bg-emerald-50 text-emerald-800'
                   }`}
                 >
                   🟢 ยังมีอยู่ ({normalStockItems.length})
                 </button>
+
+                <button
+                  onClick={() => setDashboardFilter('ALL')}
+                  className={`py-1.5 rounded-xl text-xs font-bold border transition-all text-center ${
+                    dashboardFilter === 'ALL'
+                      ? 'bg-[#2c1a0e] text-white border-[#2c1a0e]'
+                      : 'border-[#ebd5b3] bg-[#faf7f2] text-[#6e5849]'
+                  }`}
+                >
+                  ทั้งหมด ({products.length})
+                </button>
               </div>
             </div>
 
-            {/* รายการสินค้าบน Dashboard: เติมได้เฉพาะตัวที่หมดหรือควรเติม / กดเบิกไม่ได้ */}
-            <div className="space-y-1.5">
-              {displayedDashboardItems.length === 0 ? (
-                <div className="bg-white py-10 rounded-2xl text-center border border-[#ebd5b3] px-4">
-                  <p className="text-xs font-semibold text-[#8a7263]">ไม่มีรายการในหมวดนี้</p>
-                </div>
-              ) : (
-                displayedDashboardItems.map((item) => {
-                  const isOut = item.quantity === 0;
-                  const isLow = item.quantity > 0 && item.quantity <= item.minStock;
-                  const isNormal = item.quantity > item.minStock;
-                  const neededAmount = Math.max(0, item.minStock - item.quantity);
+            {/* รายการสินค้า: แสดงแยกส่วน หมด / ควรเติม / ยังมีอยู่ ให้เห็นชัดเจน */}
+            <div className="space-y-3">
+              {/* กลุ่ม 1: สินค้าที่หมดสต็อก (ถ้ามี และอยู่ในโหมด NEED_REFILL หรือ ALL) */}
+              {(dashboardFilter === 'NEED_REFILL' || dashboardFilter === 'ALL') && outOfStockItems.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 px-1">
+                    <span className="w-2 h-2 rounded-full bg-rose-600"></span>
+                    <span className="text-xs font-bold text-rose-800">
+                      หมดสต็อก ({outOfStockItems.length} รายการ)
+                    </span>
+                  </div>
 
-                  return (
+                  {outOfStockItems.map((item) => {
+                    const neededAmount = Math.max(1, item.minStock - item.quantity);
+                    return (
+                      <div
+                        key={item.id}
+                        className="bg-white rounded-xl p-2.5 border border-rose-200 bg-rose-50/20 shadow-2xs"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
+                              {item.name}
+                            </h3>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5efe6] text-[#785741] font-medium">
+                                {item.category}
+                              </span>
+                              <span className="text-[9px] text-[#8a7263]">
+                                ขั้นต่ำ: {item.minStock} {item.unit}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
+                            ● หมด
+                          </span>
+                        </div>
+
+                        <div className="mt-2 pt-1.5 border-t border-rose-100 flex items-center justify-between gap-2">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-[11px] text-[#8a7263]">คงเหลือ:</span>
+                            <span className="text-base font-extrabold leading-none text-rose-600">0</span>
+                            <span className="text-[11px] text-[#8a7263]">{item.unit}</span>
+                            <span className="text-[10px] font-bold text-rose-700 ml-1">
+                              (ขาด {neededAmount})
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(item);
+                              setAdjustAction('IN');
+                              setAdjustQty(String(neededAmount));
+                              setIsAdjustStockOpen(true);
+                            }}
+                            className="px-3 py-1 rounded-md bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>เติมของ</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* กลุ่ม 2: สินค้าที่ควรเติม (Low Stock) */}
+              {(dashboardFilter === 'NEED_REFILL' || dashboardFilter === 'ALL') && lowStockItems.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 px-1">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span className="text-xs font-bold text-amber-900">
+                      ควรเติม ({lowStockItems.length} รายการ)
+                    </span>
+                  </div>
+
+                  {lowStockItems.map((item) => {
+                    const neededAmount = Math.max(1, item.minStock - item.quantity);
+                    return (
+                      <div
+                        key={item.id}
+                        className="bg-white rounded-xl p-2.5 border border-amber-200 bg-amber-50/20 shadow-2xs"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
+                              {item.name}
+                            </h3>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5efe6] text-[#785741] font-medium">
+                                {item.category}
+                              </span>
+                              <span className="text-[9px] text-[#8a7263]">
+                                จุดเตือน: {item.minStock} {item.unit}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900">
+                            ● ควรเติม
+                          </span>
+                        </div>
+
+                        <div className="mt-2 pt-1.5 border-t border-amber-100 flex items-center justify-between gap-2">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-[11px] text-[#8a7263]">คงเหลือ:</span>
+                            <span className="text-base font-extrabold leading-none text-amber-800">
+                              {item.quantity}
+                            </span>
+                            <span className="text-[11px] text-[#8a7263]">{item.unit}</span>
+                            <span className="text-[10px] font-semibold text-amber-900 ml-1">
+                              (ขาด {neededAmount})
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(item);
+                              setAdjustAction('IN');
+                              setAdjustQty(String(neededAmount));
+                              setIsAdjustStockOpen(true);
+                            }}
+                            className="px-3 py-1 rounded-md bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>เติมของ</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ข้อความแจ้งเตือนเมื่อไม่มีของที่ต้องเติม */}
+              {dashboardFilter === 'NEED_REFILL' && allRefillItems.length === 0 && (
+                <div className="bg-white py-10 rounded-2xl text-center border border-emerald-200 bg-emerald-50/20 px-4">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto mb-1.5" />
+                  <p className="text-xs font-bold text-emerald-800">สต็อกครบพร้อมขายทุกตัว!</p>
+                  <p className="text-[10px] text-emerald-700/80 mt-0.5">ไม่มีสินค้าที่หมดหรือควรเติมในตอนนี้</p>
+                </div>
+              )}
+
+              {/* กลุ่ม 3: สินค้าที่ยังมีอยู่ (Normal) */}
+              {(dashboardFilter === 'NORMAL' || dashboardFilter === 'ALL') && normalStockItems.length > 0 && (
+                <div className="space-y-1.5">
+                  {dashboardFilter === 'ALL' && (
+                    <div className="flex items-center gap-1.5 px-1 pt-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                      <span className="text-xs font-bold text-emerald-800">
+                        ยังมีอยู่ ({normalStockItems.length} รายการ)
+                      </span>
+                    </div>
+                  )}
+
+                  {normalStockItems.map((item) => (
                     <div
                       key={item.id}
-                      className={`bg-white rounded-xl p-2.5 border shadow-2xs transition-all ${
-                        isOut
-                          ? 'border-rose-200 bg-rose-50/20'
-                          : isLow
-                          ? 'border-amber-200 bg-amber-50/20'
-                          : 'border-[#ebd5b3]/70'
-                      }`}
+                      className="bg-white rounded-xl p-2.5 border border-[#ebd5b3]/70 shadow-2xs"
                     >
-                      {/* แถวบน: ชื่อสินค้า + หมวดหมู่ + ป้ายสถานะ */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <h3 className="text-xs font-bold text-[#2c1a0e] leading-tight truncate">
@@ -477,74 +592,32 @@ export default function Home() {
                               {item.category}
                             </span>
                             <span className="text-[9px] text-[#8a7263]">
-                              จุดเตือน: {item.minStock} {item.unit}
+                              ขั้นต่ำ: {item.minStock} {item.unit}
                             </span>
                           </div>
                         </div>
 
-                        {/* ป้ายบอกสถานะ: หมด / ควรเติม / ยังมีอยู่ */}
-                        <div className="shrink-0 text-right">
-                          {isOut ? (
-                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
-                              ● หมด
-                            </span>
-                          ) : isLow ? (
-                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900">
-                              ● ควรเติม
-                            </span>
-                          ) : (
-                            <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800">
-                              ● ยังมีอยู่
-                            </span>
-                          )}
-                        </div>
+                        <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800">
+                          ● ยังมีอยู่
+                        </span>
                       </div>
 
-                      {/* แถวล่าง: คงเหลือ + ปุ่มเติม (กดเบิกไม่ได้ / เติมได้เฉพาะตัวที่หมดหรือควรเติม) */}
                       <div className="mt-2 pt-1.5 border-t border-[#f5ecde] flex items-center justify-between gap-2">
                         <div className="flex items-baseline gap-1">
                           <span className="text-[11px] text-[#8a7263]">คงเหลือ:</span>
-                          <span
-                            className={`text-base font-extrabold leading-none ${
-                              isOut ? 'text-rose-600' : isLow ? 'text-amber-800' : 'text-[#2c1a0e]'
-                            }`}
-                          >
+                          <span className="text-base font-extrabold leading-none text-[#2c1a0e]">
                             {item.quantity}
                           </span>
                           <span className="text-[11px] text-[#8a7263]">{item.unit}</span>
-
-                          {/* แสดงข้อความบอกจำนวนที่ควรเติม */}
-                          {(isOut || isLow) && (
-                            <span className="text-[10px] font-semibold text-rose-700 ml-1">
-                              (ขาด {neededAmount || 1})
-                            </span>
-                          )}
                         </div>
 
-                        <div>
-                          {isOut || isLow ? (
-                            <button
-                              onClick={() => {
-                                setSelectedProduct(item);
-                                setAdjustAction('IN');
-                                setAdjustQty(neededAmount > 0 ? String(neededAmount) : '1');
-                                setIsAdjustStockOpen(true);
-                              }}
-                              className="px-3 py-1 rounded-md bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              <span>เติมของ</span>
-                            </button>
-                          ) : (
-                            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                              ✓ ยังมีอยู่
-                            </span>
-                          )}
-                        </div>
+                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                          ✓ พร้อมขาย
+                        </span>
                       </div>
                     </div>
-                  );
-                })
+                  ))}
+                </div>
               )}
             </div>
           </div>
