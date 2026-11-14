@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String     @id @default(cuid())
+  name        String
+  category    String     @default("ทั่วไป")
+  quantity    Int        @default(0)
+  minStock    Int        @default(5)
+  unit        String     @default("ชิ้น")
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  stockLogs   StockLog[]
+
+  @@map("products")
+}
+
+model StockLog {
+  id             String   @id @default(cuid())
+  productId      String
+  productName    String
+  action         String   // IN, OUT, ADJUST
+  oldQuantity    Int
+  changeQuantity Int
+  newQuantity    Int
+  reason         String?
+  userEmail      String?  @default("Staff")
+  createdAt      DateTime @default(now())
+
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("stock_logs")
+}
+
+model CashTransaction {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  type        String   // EXPENSE, INCOME, CHANGE_FUND
+  category    String   // สั่งน้ำแข็ง, เบิกเงินทอน, รายรับเงินสด, ฯลฯ
+  amount      Float
+  note        String?
+  recordedBy  String?  @default("Staff")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("cash_transactions")
+}
