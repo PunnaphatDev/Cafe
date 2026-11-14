@@ -384,7 +384,7 @@ export default function Home() {
                       : 'border-amber-200 bg-amber-50 text-amber-900'
                   }`}
                 >
-                  ควรเติม / หมด ({allRefillItems.length})
+                  ควรเติม ({allRefillItems.length})
                 </button>
 
                 <button
