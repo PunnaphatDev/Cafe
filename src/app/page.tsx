@@ -18,8 +18,6 @@ import {
   X,
   WalletCards,
   ShoppingBag,
-  Clock,
-  Sparkles
 } from 'lucide-react';
 
 interface Product {
@@ -85,7 +83,7 @@ export default function Home() {
   const [newProductMinStock, setNewProductMinStock] = useState('5');
   const [newProductUnit, setNewProductUnit] = useState('ถุง');
 
-  // Cash State (มีแค่ 2 อย่าง: เงินเปิดร้าน และ รายจ่ายวันนี้)
+  // Cash State
   const [cashTransactions, setCashTransactions] = useState<CashTransaction[]>([]);
   const [cashSummary, setCashSummary] = useState<CashSummary>({
     totalIceExpense: 0,
@@ -289,7 +287,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#fcf9f5] flex flex-col font-sans max-w-full overflow-x-hidden pb-24">
       {/* ========================================================= */}
-      {/* 1. TOP HEADER (โลโก้ + ชื่อร้าน AUSTIN) */}
+      {/* 1. TOP HEADER */}
       {/* ========================================================= */}
       <header className="bg-white border-b border-[#eedbc5] sticky top-0 z-30 shadow-xs px-4 py-3">
         <div className="max-w-md mx-auto flex items-center justify-between">
@@ -353,11 +351,10 @@ export default function Home() {
       )}
 
       {/* ========================================================= */}
-      {/* 2. BIG DASHBOARD OVERVIEW (ป้ายสรุปยอดตัวใหญ่ อ่านง่าย ชัดเจน) */}
+      {/* 2. BIG DASHBOARD OVERVIEW */}
       {/* ========================================================= */}
       <section className="max-w-md mx-auto px-4 pt-4 pb-2 w-full">
         {activeTab === 'stock' ? (
-          /* สรุปสต็อกภาพรวม ตัวเลขใหญ่ */
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white rounded-2xl p-4 border border-[#eedbc5] shadow-xs">
               <div className="flex items-center justify-between">
@@ -387,10 +384,8 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          /* สรุปเงินสดภาพรวม ตัวเลขใหญ่ ชัดเจน (มีแค่ เงินเปิดร้าน และ รายจ่ายวันนี้) */
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              {/* เงินเปิดร้านวันนี้ */}
               <div className="bg-white rounded-2xl p-4 border border-[#eedbc5] shadow-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-emerald-800">เงินเปิดร้านวันนี้</span>
@@ -402,7 +397,6 @@ export default function Home() {
                 <p className="text-[10px] text-[#8a7263] mt-0.5">เงินทอนใส่ลิ้นชัก</p>
               </div>
 
-              {/* รายจ่ายวันนี้ */}
               <div className="bg-white rounded-2xl p-4 border border-[#eedbc5] shadow-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-rose-800">รายจ่ายวันนี้</span>
@@ -415,7 +409,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* เงินสดคงเหลือในลิ้นชัก (คำนวณสรุป) */}
             <div className="bg-[#fceddf] rounded-2xl p-3.5 border border-[#eedbc5] flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-bold text-[#8a583a]">เงินสดคงเหลือในลิ้นชัก (เปิดร้าน - จ่ายออก)</p>
@@ -436,11 +429,11 @@ export default function Home() {
       {/* ========================================================= */}
       <main className="max-w-md mx-auto px-4 py-2 w-full flex-1">
         {/* ========================================================= */}
-        {/* TAB 1: สต็อกสินค้า (เข้าใจง่าย ปุ่มใหญ่ ไม่ต้องเลื่อนซ้ายขวา) */}
+        {/* TAB 1: สต็อกสินค้า (LAYOUT ใหม่ จัดเต็ม ปุ่มไม่อัด ไม่ตกบรรทัด) */}
         {/* ========================================================= */}
         {activeTab === 'stock' && (
           <div className="space-y-3">
-            {/* Search + Category Dropdown (1 แถวจบ) */}
+            {/* Search + Category Dropdown */}
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="w-3.5 h-3.5 text-[#a38b7d] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -467,8 +460,8 @@ export default function Home() {
               </select>
             </div>
 
-            {/* การ์ดสินค้า (Card Layout ชัดเจน) */}
-            <div className="space-y-2.5">
+            {/* การ์ดสินค้า: ปรับ Layout ใหม่ ไม่อัด ไม่เบียด ปุ่มตัวหนังสือบรรทัดเดียว สวยงาม */}
+            <div className="space-y-3">
               {products.length === 0 ? (
                 <div className="bg-white py-12 rounded-2xl text-center text-xs font-medium text-[#8a7263] border border-[#eedbc5]">
                   ไม่พบรายการสินค้า
@@ -481,84 +474,90 @@ export default function Home() {
                   return (
                     <div
                       key={item.id}
-                      className="bg-white rounded-2xl p-3.5 border border-[#eedbc5] shadow-xs"
+                      className="bg-white rounded-2xl p-4 border border-[#eedbc5] shadow-xs space-y-3"
                     >
-                      {/* แถวบน: ชื่อสินค้า & สถานะ */}
+                      {/* ส่วนที่ 1: ชื่อสินค้า + สถานะ */}
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="text-sm font-bold text-[#2c1a0e] leading-snug">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-base font-bold text-[#2c1a0e] leading-snug">
                             {item.name}
                           </h3>
-                          <span className="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[#f6eee3] text-[#7d5d48]">
-                            {item.category}
-                          </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[#f6eee3] text-[#7d5d48]">
+                              {item.category}
+                            </span>
+                            <span className="text-[11px] text-[#8a7263]">
+                              จุดเตือน: {item.minStock} {item.unit}
+                            </span>
+                          </div>
                         </div>
 
-                        {/* ป้ายเตือน */}
-                        <div>
+                        {/* ป้ายสถานะชัดเจน */}
+                        <div className="shrink-0">
                           {isOutOfStock ? (
-                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-700">
+                            <span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-700">
                               ● หมดแล้ว
                             </span>
                           ) : isLowStock ? (
-                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+                            <span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
                               ● ใกล้หมด
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                            <span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
                               ● พอขาย
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* แถวล่าง: ตัวเลขคงเหลือ + ปุ่มกดเติม/เบิก */}
-                      <div className="mt-3 pt-2.5 border-t border-[#f7ede1] flex items-center justify-between">
+                      {/* ส่วนที่ 2: แสดงจำนวนคงเหลือตัวใหญ่สะดุดตา + ปุ่มถังขยะ */}
+                      <div className="flex items-center justify-between pt-1">
                         <div>
-                          <p className="text-[10px] text-[#8a7263]">คงเหลือในร้าน</p>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-black text-[#2c1a0e]">{item.quantity}</span>
-                            <span className="text-xs font-bold text-[#8a7263]">{item.unit}</span>
-                            <span className="text-[10px] text-[#b49f91] ml-1">
-                              (เตือนเมื่อต่ำกว่า {item.minStock})
+                          <p className="text-[11px] text-[#8a7263]">คงเหลือในร้าน</p>
+                          <div className="flex items-baseline gap-1.5 mt-0.5">
+                            <span className="text-3xl font-black text-[#2c1a0e] leading-none">
+                              {item.quantity}
+                            </span>
+                            <span className="text-sm font-bold text-[#8a7263]">
+                              {item.unit}
                             </span>
                           </div>
                         </div>
 
-                        {/* ปุ่มกดใหญ่ กะทัดรัด แตะง่าย */}
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => {
-                              setSelectedProduct(item);
-                              setAdjustAction('IN');
-                              setIsAdjustStockOpen(true);
-                            }}
-                            className="px-3 py-2 rounded-xl bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>เติมของ</span>
-                          </button>
+                        <button
+                          onClick={() => handleDeleteProduct(item.id, item.name)}
+                          className="p-2 text-[#cbb6a8] hover:text-rose-600 active:scale-90 transition-all rounded-xl hover:bg-rose-50"
+                          title="ลบสินค้า"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
 
-                          <button
-                            onClick={() => {
-                              setSelectedProduct(item);
-                              setAdjustAction('OUT');
-                              setIsAdjustStockOpen(true);
-                            }}
-                            className="px-3 py-2 rounded-xl bg-[#c85a2b] active:bg-[#b04e22] text-white font-bold text-xs flex items-center gap-1 shadow-xs"
-                          >
-                            <Minus className="w-3.5 h-3.5" />
-                            <span>เบิกใช้</span>
-                          </button>
+                      {/* ส่วนที่ 3: ปุ่ม เติมของ และ เบิกใช้ แนวนอนเต็มกว้าง ตัวหนังสือบรรทัดเดียว แตะง่ายสะใจ */}
+                      <div className="grid grid-cols-2 gap-2.5 pt-1">
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(item);
+                            setAdjustAction('IN');
+                            setIsAdjustStockOpen(true);
+                          }}
+                          className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>เติมของ</span>
+                        </button>
 
-                          <button
-                            onClick={() => handleDeleteProduct(item.id, item.name)}
-                            className="p-2 text-[#cbb6a8] hover:text-rose-600"
-                            title="ลบสินค้า"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(item);
+                            setAdjustAction('OUT');
+                            setIsAdjustStockOpen(true);
+                          }}
+                          className="w-full py-2.5 px-3 rounded-xl bg-[#c85a2b] hover:bg-[#b04e22] active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
+                        >
+                          <Minus className="w-4 h-4" />
+                          <span>เบิกใช้</span>
+                        </button>
                       </div>
                     </div>
                   );
@@ -569,11 +568,10 @@ export default function Home() {
         )}
 
         {/* ========================================================= */}
-        {/* TAB 2: เงินเปิดร้าน & รายจ่ายวันนี้ (เข้าใจง่าย ไม่ซับซ้อน) */}
+        {/* TAB 2: เงินเปิดร้าน & รายจ่ายวันนี้ */}
         {/* ========================================================= */}
         {activeTab === 'cash' && (
           <div className="space-y-3">
-            {/* ปุ่มลัด 2 ปุ่มใหญ่: เงินเปิดร้าน / ลงรายจ่าย */}
             <div className="grid grid-cols-2 gap-2.5">
               <button
                 onClick={() => {
@@ -600,7 +598,6 @@ export default function Home() {
               </button>
             </div>
 
-            {/* รายการบันทึกล่าสุด */}
             <div className="space-y-2">
               <p className="text-xs font-bold text-[#8a7263] px-1">รายการเงินสดล่าสุด</p>
 
@@ -740,7 +737,7 @@ export default function Home() {
       </main>
 
       {/* ========================================================= */}
-      {/* 4. APP-LIKE BOTTOM BAR (กดง่ายด้วยนิ้วโป้ง) */}
+      {/* 4. APP-LIKE BOTTOM BAR */}
       {/* ========================================================= */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#eedbc5] shadow-lg">
         <div className="max-w-md mx-auto grid grid-cols-3 h-16">
@@ -985,7 +982,6 @@ export default function Home() {
             </div>
 
             <form onSubmit={handleCreateCash} className="space-y-3">
-              {/* สลับประเภท: เงินเปิดร้าน หรือ รายจ่าย */}
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -1047,7 +1043,6 @@ export default function Home() {
                   className="w-full px-3 py-2.5 bg-[#faf7f2] border border-[#eedbc5] rounded-xl text-lg font-black text-center"
                 />
 
-                {/* ปุ่มแตะยอดฮิต */}
                 {cashType === 'EXPENSE' && cashCategory === 'สั่งน้ำแข็ง' ? (
                   <div className="grid grid-cols-3 gap-1.5 mt-2">
                     {[20, 40, 60].map((amt) => (
