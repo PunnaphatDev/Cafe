@@ -12,16 +12,14 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
-  TrendingUp,
   Snowflake,
   Coins,
   Wallet,
   Trash2,
-  RefreshCw,
-  SlidersHorizontal,
-  Layers,
   ArrowDownRight,
-  ArrowUpRight
+  ArrowUpRight,
+  X,
+  Filter
 } from 'lucide-react';
 
 interface Product {
@@ -115,7 +113,7 @@ export default function Home() {
 
   const showAlert = (type: 'success' | 'error', text: string) => {
     setAlertMsg({ type, text });
-    setTimeout(() => setAlertMsg(null), 4000);
+    setTimeout(() => setAlertMsg(null), 3000);
   };
 
   // Fetch Data
@@ -225,7 +223,7 @@ export default function Home() {
 
   // Handle Delete Product
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (!confirm(`คุณแน่ใจว่าต้องการลบสินค้า "${name}" ใช่หรือไม่?`)) return;
+    if (!confirm(`ต้องการลบสินค้า "${name}" ใช่หรือไม่?`)) return;
     try {
       const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
       const data = await res.json();
@@ -256,7 +254,7 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.success) {
-        showAlert('success', 'บันทึกรายการเงินสดสำเร็จ');
+        showAlert('success', 'บันทึกรายการสำเร็จ');
         setIsAddCashOpen(false);
         setCashAmount('');
         setCashNote('');
@@ -273,7 +271,7 @@ export default function Home() {
 
   // Handle Delete Cash
   const handleDeleteCash = async (id: string) => {
-    if (!confirm('ยืนยันที่จะลบรายการนี้ใช่หรือไม่?')) return;
+    if (!confirm('ยืนยันลบรายการนี้ใช่หรือไม่?')) return;
     try {
       const res = await fetch(`/api/cash/${id}`, { method: 'DELETE' });
       const data = await res.json();
@@ -291,662 +289,570 @@ export default function Home() {
   const outOfStockCount = products.filter(p => p.quantity === 0).length;
 
   return (
-    <div className="min-h-screen bg-[#faf7f2] flex flex-col font-sans">
-      {/* Top Banner / Navigation */}
-      <header className="bg-white border-b border-[#ebd5b3]/70 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            {/* Logo and Brand */}
-            <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-[#ebd5b3] shadow-xs bg-[#fdfbf9]">
-                <Image
-                  src="/logo.jpg"
-                  alt="AUSTIN Cat Hotel & Cafe"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight text-[#2c1a0e] flex items-center gap-2">
-                  <span>AUSTIN</span>
-                  <span className="text-[#c85a2b] font-normal text-sm px-2 py-0.5 rounded-full bg-[#faece5]">
-                    CAT HOTEL & CAFE
-                  </span>
-                </h1>
-                <p className="text-xs text-[#8f7565] tracking-widest uppercase">
-                  SAFE • CALM • COZY
-                </p>
-              </div>
+    <div className="min-h-screen bg-[#faf7f2] flex flex-col font-sans max-w-full overflow-x-hidden pb-20">
+      {/* ========================================================= */}
+      {/* 1. COMPACT STICKY HEADER (ไม่มีการเลื่อนซ้ายขวา) */}
+      {/* ========================================================= */}
+      <header className="bg-white border-b border-[#ebd5b3]/70 sticky top-0 z-30 shadow-xs px-3 py-2.5">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
+          {/* Logo & Brand Name */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="relative w-9 h-9 rounded-lg overflow-hidden border border-[#ebd5b3] shrink-0 bg-[#fdfbf9]">
+              <Image src="/logo.jpg" alt="Logo" fill className="object-cover" priority />
             </div>
-
-            {/* Navigation Tabs */}
-            <nav className="flex items-center gap-1 sm:gap-2">
-              <button
-                onClick={() => setActiveTab('stock')}
-                className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === 'stock'
-                    ? 'bg-[#c85a2b] text-white shadow-sm'
-                    : 'text-[#6e5849] hover:bg-[#f3ede2]'
-                }`}
-              >
-                <Package className="w-4 h-4" />
-                <span>จัดการสต็อก</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('cash')}
-                className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === 'cash'
-                    ? 'bg-[#c85a2b] text-white shadow-sm'
-                    : 'text-[#6e5849] hover:bg-[#f3ede2]'
-                }`}
-              >
-                <DollarSign className="w-4 h-4" />
-                <span>เงินสด & เงินทอน</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('logs')}
-                className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === 'logs'
-                    ? 'bg-[#c85a2b] text-white shadow-sm'
-                    : 'text-[#6e5849] hover:bg-[#f3ede2]'
-                }`}
-              >
-                <History className="w-4 h-4" />
-                <span className="hidden sm:inline">ประวัติสต็อก</span>
-              </button>
-            </nav>
+            <div className="min-w-0">
+              <h1 className="text-sm font-bold text-[#2c1a0e] leading-tight truncate">
+                AUSTIN <span className="text-[#c85a2b] font-medium text-xs">CAFE</span>
+              </h1>
+              <p className="text-[10px] text-[#8f7565] leading-none">SAFE • CALM • COZY</p>
+            </div>
           </div>
+
+          {/* Quick Header Action (+ เพิ่มรายการ) */}
+          {activeTab === 'stock' && (
+            <button
+              onClick={() => setIsAddProductOpen(true)}
+              className="px-3 py-1.5 bg-[#c85a2b] active:scale-95 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>เพิ่มสินค้า</span>
+            </button>
+          )}
+
+          {activeTab === 'cash' && (
+            <button
+              onClick={() => setIsAddCashOpen(true)}
+              className="px-3 py-1.5 bg-[#1b6b47] active:scale-95 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ บันทึกเงิน</span>
+            </button>
+          )}
         </div>
       </header>
 
       {/* Alert Notification Toast */}
       {alertMsg && (
-        <div className="fixed top-24 right-6 z-50 animate-bounce">
+        <div className="fixed top-14 left-3 right-3 z-50 animate-in fade-in slide-in-from-top-2">
           <div
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium ${
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl shadow-md border text-xs font-medium ${
               alertMsg.type === 'success'
                 ? 'bg-[#eefaf2] border-[#a5d6a7] text-[#1e612f]'
                 : 'bg-[#fdf2f2] border-[#f5c6cb] text-[#842029]'
             }`}
           >
             {alertMsg.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
             ) : (
-              <XCircle className="w-5 h-5 text-rose-600" />
+              <XCircle className="w-4 h-4 shrink-0 text-rose-600" />
             )}
-            <span>{alertMsg.text}</span>
+            <span className="truncate">{alertMsg.text}</span>
           </div>
         </div>
       )}
 
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+      {/* Main Content (ความกว้างเต็มจอ ไม่ล้น) */}
+      <main className="max-w-4xl mx-auto px-3 py-3 w-full flex-1">
         {/* ========================================================= */}
-        {/* TAB 1: STOCK MANAGEMENT */}
+        {/* TAB 1: STOCK MANAGEMENT (CARD VIEW - NO HORIZONTAL SCROLL) */}
         {/* ========================================================= */}
         {activeTab === 'stock' && (
-          <div className="space-y-6">
-            {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white p-5 rounded-2xl border border-[#ebd5b3]/60 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-[#8f7565]">สินค้าทั้งหมด</p>
-                  <p className="text-2xl font-bold text-[#2c1a0e] mt-1">{products.length} รายการ</p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-[#f5efe6] flex items-center justify-center text-[#c85a2b]">
-                  <Layers className="w-6 h-6" />
-                </div>
+          <div className="space-y-3">
+            {/* Ultra-compact 3-stat Bar */}
+            <div className="grid grid-cols-3 gap-2 bg-white p-2.5 rounded-xl border border-[#ebd5b3]/60 shadow-2xs">
+              <div className="text-center">
+                <p className="text-[10px] text-[#8f7565]">สินค้าทั้งหมด</p>
+                <p className="text-base font-bold text-[#2c1a0e] leading-tight">{products.length}</p>
               </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-[#ebd5b3]/60 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-amber-700">สินค้าใกล้หมด</p>
-                  <p className="text-2xl font-bold text-amber-900 mt-1">{lowStockCount} รายการ</p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                  <AlertTriangle className="w-6 h-6" />
-                </div>
+              <div className="text-center border-x border-[#ebd5b3]/50">
+                <p className="text-[10px] text-amber-700">ใกล้หมด</p>
+                <p className="text-base font-bold text-amber-800 leading-tight">{lowStockCount}</p>
               </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-[#ebd5b3]/60 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-rose-700">สินค้าหมดสต็อก</p>
-                  <p className="text-2xl font-bold text-rose-900 mt-1">{outOfStockCount} รายการ</p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
-                  <XCircle className="w-6 h-6" />
-                </div>
+              <div className="text-center">
+                <p className="text-[10px] text-rose-700">หมดสต็อก</p>
+                <p className="text-base font-bold text-rose-800 leading-tight">{outOfStockCount}</p>
               </div>
             </div>
 
-            {/* Filter and Action Bar */}
-            <div className="bg-white p-4 rounded-2xl border border-[#ebd5b3]/60 shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
-              {/* Search */}
-              <div className="relative w-full md:w-80">
-                <Search className="w-4 h-4 text-[#a38b7d] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            {/* Search & Category Filter Row (Vertical stack / 1-row, no scroll) */}
+            <div className="grid grid-cols-12 gap-2">
+              <div className="col-span-7 relative">
+                <Search className="w-3.5 h-3.5 text-[#a38b7d] absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="ค้นหาชื่อสินค้า เช่น เมล็ดกาแฟ, นมสด..."
+                  placeholder="ค้นหาชื่อสินค้า..."
                   value={searchStock}
                   onChange={(e) => setSearchStock(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                  className="w-full pl-8 pr-2 py-2 bg-white border border-[#ebd5b3] rounded-lg text-xs focus:outline-hidden focus:ring-1 focus:ring-[#c85a2b]"
                 />
               </div>
-
-              {/* Category Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-                {['ทั้งหมด', 'เมล็ดกาแฟ', 'วัตถุดิบนม', 'ชาและผงเครื่องดื่ม', 'บรรจุภัณฑ์'].map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                      selectedCategory === cat
-                        ? 'bg-[#2c1a0e] text-white'
-                        : 'bg-[#f5efe6] text-[#6e5849] hover:bg-[#ebd5b3]'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+              <div className="col-span-5">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full py-2 px-2 bg-white border border-[#ebd5b3] rounded-lg text-xs font-medium text-[#6e5849] focus:outline-hidden"
+                >
+                  <option value="ทั้งหมด">หมวด: ทั้งหมด</option>
+                  <option value="เมล็ดกาแฟ">เมล็ดกาแฟ</option>
+                  <option value="วัตถุดิบนม">วัตถุดิบนม</option>
+                  <option value="ชาและผงเครื่องดื่ม">ชา/เครื่องดื่ม</option>
+                  <option value="บรรจุภัณฑ์">บรรจุภัณฑ์</option>
+                  <option value="ทั่วไป">ทั่วไป</option>
+                </select>
               </div>
-
-              {/* Add Product Button */}
-              <button
-                onClick={() => setIsAddProductOpen(true)}
-                className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-[#c85a2b] hover:bg-[#b04e22] text-white rounded-xl text-sm font-medium shadow-xs transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                <span>เพิ่มสินค้าใหม่</span>
-              </button>
             </div>
 
-            {/* Product Table */}
-            <div className="bg-white rounded-2xl border border-[#ebd5b3]/60 shadow-xs overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-[#f8f4ee] border-b border-[#ebd5b3]/70 text-[#6e5849] uppercase text-xs">
-                    <tr>
-                      <th className="px-5 py-4">ชื่อสินค้า</th>
-                      <th className="px-5 py-4">หมวดหมู่</th>
-                      <th className="px-5 py-4 text-center">คงเหลือ</th>
-                      <th className="px-5 py-4 text-center">จุดเตือนขั้นต่ำ</th>
-                      <th className="px-5 py-4 text-center">หน่วยนับ</th>
-                      <th className="px-5 py-4 text-center">สถานะ</th>
-                      <th className="px-5 py-4 text-right">จัดการสต็อก</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#ebd5b3]/40">
-                    {products.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="px-5 py-12 text-center text-[#8f7565]">
-                          ไม่พบรายการสินค้า
-                        </td>
-                      </tr>
-                    ) : (
-                      products.map((item) => {
-                        const isOutOfStock = item.quantity === 0;
-                        const isLowStock = item.quantity > 0 && item.quantity <= item.minStock;
+            {/* Native Mobile Product Cards (No horizontal scroll!) */}
+            <div className="space-y-2">
+              {products.length === 0 ? (
+                <div className="bg-white py-10 rounded-xl text-center text-xs text-[#8f7565] border border-[#ebd5b3]/60">
+                  ไม่พบรายการสินค้า
+                </div>
+              ) : (
+                products.map((item) => {
+                  const isOutOfStock = item.quantity === 0;
+                  const isLowStock = item.quantity > 0 && item.quantity <= item.minStock;
 
-                        return (
-                          <tr key={item.id} className="hover:bg-[#faf7f2]/80 transition-colors">
-                            <td className="px-5 py-4 font-semibold text-[#2c1a0e]">
-                              {item.name}
-                            </td>
-                            <td className="px-5 py-4">
-                              <span className="inline-block px-2.5 py-1 rounded-md text-xs font-medium bg-[#f5efe6] text-[#785741]">
-                                {item.category}
-                              </span>
-                            </td>
-                            <td className="px-5 py-4 text-center font-bold text-base text-[#2c1a0e]">
-                              {item.quantity}
-                            </td>
-                            <td className="px-5 py-4 text-center text-[#8f7565]">
-                              {item.minStock}
-                            </td>
-                            <td className="px-5 py-4 text-center text-[#8f7565]">
-                              {item.unit}
-                            </td>
-                            <td className="px-5 py-4 text-center">
-                              {isOutOfStock ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
-                                  ● หมดสต็อก
-                                </span>
-                              ) : isLowStock ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                  ● ใกล้หมด
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                  ● ปกติ
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-5 py-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  onClick={() => {
-                                    setSelectedProduct(item);
-                                    setAdjustAction('IN');
-                                    setIsAdjustStockOpen(true);
-                                  }}
-                                  className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium text-xs flex items-center gap-1 transition-all"
-                                >
-                                  <Plus className="w-3.5 h-3.5" />
-                                  <span>รับเข้า</span>
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSelectedProduct(item);
-                                    setAdjustAction('OUT');
-                                    setIsAdjustStockOpen(true);
-                                  }}
-                                  className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium text-xs flex items-center gap-1 transition-all"
-                                >
-                                  <Minus className="w-3.5 h-3.5" />
-                                  <span>เบิกออก</span>
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteProduct(item.id, item.name)}
-                                  className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-all"
-                                  title="ลบสินค้า"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                  return (
+                    <div
+                      key={item.id}
+                      className={`bg-white rounded-xl p-3 border shadow-2xs transition-all ${
+                        isOutOfStock
+                          ? 'border-rose-200 bg-rose-50/20'
+                          : isLowStock
+                          ? 'border-amber-200 bg-amber-50/20'
+                          : 'border-[#ebd5b3]/60'
+                      }`}
+                    >
+                      {/* Top: Product Name & Category */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-semibold text-[#2c1a0e] leading-snug">
+                            {item.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#f5efe6] text-[#785741] font-medium">
+                              {item.category}
+                            </span>
+                            <span className="text-[10px] text-[#8f7565]">
+                              ขั้นต่ำ: {item.minStock} {item.unit}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="shrink-0 text-right">
+                          {isOutOfStock ? (
+                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">
+                              หมด
+                            </span>
+                          ) : isLowStock ? (
+                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                              ใกล้หมด
+                            </span>
+                          ) : (
+                            <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                              ปกติ
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Bottom: Big Quantity & Easy Thumb Buttons */}
+                      <div className="mt-3 pt-2.5 border-t border-[#f0e4d0]/70 flex items-center justify-between gap-2">
+                        {/* Quantity display */}
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-bold text-[#2c1a0e]">{item.quantity}</span>
+                          <span className="text-xs text-[#8f7565]">{item.unit}</span>
+                        </div>
+
+                        {/* Big Thumb Buttons */}
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(item);
+                              setAdjustAction('IN');
+                              setIsAdjustStockOpen(true);
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 active:bg-emerald-700 text-white font-medium text-xs flex items-center gap-1 shadow-2xs"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>รับเข้า</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(item);
+                              setAdjustAction('OUT');
+                              setIsAdjustStockOpen(true);
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-amber-600 active:bg-amber-700 text-white font-medium text-xs flex items-center gap-1 shadow-2xs"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                            <span>เบิกออก</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProduct(item.id, item.name)}
+                            className="p-1.5 text-[#b09282] active:text-rose-600"
+                            title="ลบ"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         )}
 
         {/* ========================================================= */}
-        {/* TAB 2: CASH MANAGEMENT & CHANGE FUND */}
+        {/* TAB 2: CASH MANAGEMENT (MOBILE 2x2 GRID & LIST) */}
         {/* ========================================================= */}
         {activeTab === 'cash' && (
-          <div className="space-y-6">
-            {/* Cash Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-5 rounded-2xl border border-[#ebd5b3]/60 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-rose-700">ค่าใช้จ่ายเงินสดวันนี้</p>
-                  <p className="text-2xl font-bold text-rose-600 mt-1">
-                    ฿{cashSummary.todayExpense.toLocaleString()}
-                  </p>
+          <div className="space-y-3">
+            {/* 2x2 Compact Summary Grid (Fit exactly in 1 screen height) */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white p-2.5 rounded-xl border border-[#ebd5b3]/60 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-rose-700 font-medium">จ่ายวันนี้</p>
+                  <ArrowDownRight className="w-3.5 h-3.5 text-rose-500" />
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
-                  <ArrowDownRight className="w-6 h-6" />
-                </div>
+                <p className="text-base font-bold text-rose-600 mt-0.5">
+                  ฿{cashSummary.todayExpense.toLocaleString()}
+                </p>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-[#ebd5b3]/60 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-sky-700">ยอดสั่งน้ำแข็งสะสม</p>
-                  <p className="text-2xl font-bold text-sky-600 mt-1">
-                    ฿{cashSummary.totalIceExpense.toLocaleString()}
-                  </p>
+              <div className="bg-white p-2.5 rounded-xl border border-[#ebd5b3]/60 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-sky-700 font-medium">สั่งน้ำแข็งสะสม</p>
+                  <Snowflake className="w-3.5 h-3.5 text-sky-500" />
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600">
-                  <Snowflake className="w-6 h-6" />
-                </div>
+                <p className="text-base font-bold text-sky-600 mt-0.5">
+                  ฿{cashSummary.totalIceExpense.toLocaleString()}
+                </p>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-[#ebd5b3]/60 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-emerald-700">เงินทอนเปิดร้านวันนี้</p>
-                  <p className="text-2xl font-bold text-emerald-600 mt-1">
-                    ฿{cashSummary.todayChangeFund.toLocaleString()}
-                  </p>
+              <div className="bg-white p-2.5 rounded-xl border border-[#ebd5b3]/60 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-emerald-700 font-medium">เงินทอนเปิดร้าน</p>
+                  <Coins className="w-3.5 h-3.5 text-emerald-500" />
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                  <Coins className="w-6 h-6" />
-                </div>
+                <p className="text-base font-bold text-emerald-600 mt-0.5">
+                  ฿{cashSummary.todayChangeFund.toLocaleString()}
+                </p>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-[#ebd5b3]/60 shadow-xs flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-[#c85a2b]">เงินสดสุทธิในลิ้นชัก</p>
-                  <p className="text-2xl font-bold text-[#2c1a0e] mt-1">
-                    ฿{cashSummary.netCashInDrawer.toLocaleString()}
-                  </p>
+              <div className="bg-[#faece5] p-2.5 rounded-xl border border-[#ebd5b3] shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-[#c85a2b] font-bold">เงินในลิ้นชักสุทธิ</p>
+                  <Wallet className="w-3.5 h-3.5 text-[#c85a2b]" />
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-[#faece5] flex items-center justify-center text-[#c85a2b]">
-                  <Wallet className="w-6 h-6" />
-                </div>
+                <p className="text-base font-bold text-[#2c1a0e] mt-0.5">
+                  ฿{cashSummary.netCashInDrawer.toLocaleString()}
+                </p>
               </div>
             </div>
 
-            {/* Filter and New Record Button */}
-            <div className="bg-white p-4 rounded-2xl border border-[#ebd5b3]/60 shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
-              {/* Search */}
-              <div className="relative w-full md:w-80">
-                <Search className="w-4 h-4 text-[#a38b7d] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            {/* Search & Type Filter (Compact 1-row) */}
+            <div className="grid grid-cols-12 gap-2">
+              <div className="col-span-7 relative">
+                <Search className="w-3.5 h-3.5 text-[#a38b7d] absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="ค้นหา เช่น สั่งน้ำแข็ง, มะนาว, เงินทอน..."
+                  placeholder="ค้นหา..."
                   value={searchCash}
                   onChange={(e) => setSearchCash(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                  className="w-full pl-8 pr-2 py-2 bg-white border border-[#ebd5b3] rounded-lg text-xs focus:outline-hidden"
                 />
               </div>
-
-              {/* Type Filter */}
-              <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-                {[
-                  { label: 'ทั้งหมด', val: 'ทั้งหมด' },
-                  { label: 'ค่าใช้จ่าย', val: 'EXPENSE' },
-                  { label: 'เงินทอนเปิดร้าน', val: 'CHANGE_FUND' },
-                  { label: 'รายรับเงินสด', val: 'INCOME' },
-                ].map((t) => (
-                  <button
-                    key={t.val}
-                    onClick={() => setSelectedCashType(t.val)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                      selectedCashType === t.val
-                        ? 'bg-[#2c1a0e] text-white'
-                        : 'bg-[#f5efe6] text-[#6e5849] hover:bg-[#ebd5b3]'
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+              <div className="col-span-5">
+                <select
+                  value={selectedCashType}
+                  onChange={(e) => setSelectedCashType(e.target.value)}
+                  className="w-full py-2 px-2 bg-white border border-[#ebd5b3] rounded-lg text-xs font-medium text-[#6e5849] focus:outline-hidden"
+                >
+                  <option value="ทั้งหมด">ประเภท: ทั้งหมด</option>
+                  <option value="EXPENSE">ค่าใช้จ่าย</option>
+                  <option value="CHANGE_FUND">เงินทอน</option>
+                  <option value="INCOME">รายรับเงินสด</option>
+                </select>
               </div>
-
-              {/* Add Cash Record Button */}
-              <button
-                onClick={() => setIsAddCashOpen(true)}
-                className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-[#1b6b47] hover:bg-[#155638] text-white rounded-xl text-sm font-medium shadow-xs transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ บันทึกรายการใหม่</span>
-              </button>
             </div>
 
-            {/* Cash Table */}
-            <div className="bg-white rounded-2xl border border-[#ebd5b3]/60 shadow-xs overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-[#f8f4ee] border-b border-[#ebd5b3]/70 text-[#6e5849] uppercase text-xs">
-                    <tr>
-                      <th className="px-5 py-4">วันที่ / เวลา</th>
-                      <th className="px-5 py-4">ประเภท</th>
-                      <th className="px-5 py-4">หมวดหมู่</th>
-                      <th className="px-5 py-4 text-right">จำนวนเงิน</th>
-                      <th className="px-5 py-4">รายละเอียด / หมายเหตุ</th>
-                      <th className="px-5 py-4">ผู้บันทึก</th>
-                      <th className="px-5 py-4 text-center">จัดการ</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#ebd5b3]/40">
-                    {cashTransactions.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="px-5 py-12 text-center text-[#8f7565]">
-                          ไม่พบรายการเงินสด
-                        </td>
-                      </tr>
-                    ) : (
-                      cashTransactions.map((tx) => {
-                        const isExpense = tx.type === 'EXPENSE';
-                        const isIncome = tx.type === 'INCOME';
+            {/* Compact Transaction List (No wide table, fits screen 100%) */}
+            <div className="space-y-2">
+              {cashTransactions.length === 0 ? (
+                <div className="bg-white py-10 rounded-xl text-center text-xs text-[#8f7565] border border-[#ebd5b3]/60">
+                  ไม่พบรายการเงินสด
+                </div>
+              ) : (
+                cashTransactions.map((tx) => {
+                  const isExpense = tx.type === 'EXPENSE';
+                  return (
+                    <div
+                      key={tx.id}
+                      className="bg-white rounded-xl p-3 border border-[#ebd5b3]/60 shadow-2xs flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${
+                              isExpense
+                                ? 'bg-rose-50 text-rose-700'
+                                : tx.type === 'INCOME'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-sky-50 text-sky-700'
+                            }`}
+                          >
+                            {isExpense ? 'จ่าย' : tx.type === 'INCOME' ? 'รับ' : 'เงินทอน'}
+                          </span>
+                          <span className="text-xs font-bold text-[#2c1a0e] truncate">
+                            {tx.category}
+                          </span>
+                        </div>
+                        {tx.note && (
+                          <p className="text-[11px] text-[#8f7565] truncate mt-0.5">{tx.note}</p>
+                        )}
+                        <p className="text-[10px] text-[#b09282] mt-0.5">
+                          {new Date(tx.date).toLocaleDateString('th-TH', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}{' '}
+                          • {tx.recordedBy || 'Staff'}
+                        </p>
+                      </div>
 
-                        return (
-                          <tr key={tx.id} className="hover:bg-[#faf7f2]/80 transition-colors">
-                            <td className="px-5 py-4 text-[#8f7565] text-xs">
-                              {new Date(tx.date).toLocaleDateString('th-TH', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </td>
-                            <td className="px-5 py-4">
-                              {isExpense && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-rose-50 text-rose-700">
-                                  ● จ่ายออก
-                                </span>
-                              )}
-                              {isIncome && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700">
-                                  ● รายรับ
-                                </span>
-                              )}
-                              {tx.type === 'CHANGE_FUND' && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-50 text-sky-700">
-                                  ● เงินทอน
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-5 py-4 font-semibold text-[#2c1a0e]">
-                              {tx.category}
-                            </td>
-                            <td
-                              className={`px-5 py-4 text-right font-bold text-base ${
-                                isExpense ? 'text-rose-600' : 'text-emerald-700'
-                              }`}
-                            >
-                              {isExpense ? '-' : '+'}฿{tx.amount.toLocaleString()}
-                            </td>
-                            <td className="px-5 py-4 text-[#8f7565]">
-                              {tx.note || '-'}
-                            </td>
-                            <td className="px-5 py-4 text-xs text-[#8f7565]">
-                              {tx.recordedBy || 'Staff'}
-                            </td>
-                            <td className="px-5 py-4 text-center">
-                              <button
-                                onClick={() => handleDeleteCash(tx.id)}
-                                className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-all"
-                                title="ลบรายการ"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      <div className="text-right shrink-0">
+                        <p
+                          className={`text-sm font-bold ${
+                            isExpense ? 'text-rose-600' : 'text-emerald-700'
+                          }`}
+                        >
+                          {isExpense ? '-' : '+'}฿{tx.amount.toLocaleString()}
+                        </p>
+                        <button
+                          onClick={() => handleDeleteCash(tx.id)}
+                          className="mt-1 text-xs text-[#b09282] active:text-rose-600"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 inline" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         )}
 
         {/* ========================================================= */}
-        {/* TAB 3: STOCK LOGS */}
+        {/* TAB 3: STOCK LOGS (COMPACT MOBILE TIMELINE) */}
         {/* ========================================================= */}
         {activeTab === 'logs' && (
-          <div className="space-y-6">
-            <div className="bg-white p-4 rounded-2xl border border-[#ebd5b3]/60 shadow-xs flex items-center justify-between">
-              <div className="relative w-full md:w-96">
-                <Search className="w-4 h-4 text-[#a38b7d] absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="ค้นหาชื่อสินค้า หรือเหตุผลในประวัติ..."
-                  value={searchLogs}
-                  onChange={(e) => setSearchLogs(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
-                />
-              </div>
-              <button
-                onClick={fetchLogs}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#f5efe6] text-[#6e5849] hover:bg-[#ebd5b3] text-sm font-medium"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span>รีเฟรช</span>
-              </button>
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-[#a38b7d] absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="ค้นหาในประวัติ..."
+                value={searchLogs}
+                onChange={(e) => setSearchLogs(e.target.value)}
+                className="w-full pl-8 pr-2 py-2 bg-white border border-[#ebd5b3] rounded-lg text-xs focus:outline-hidden"
+              />
             </div>
 
-            <div className="bg-white rounded-2xl border border-[#ebd5b3]/60 shadow-xs overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-[#f8f4ee] border-b border-[#ebd5b3]/70 text-[#6e5849] uppercase text-xs">
-                    <tr>
-                      <th className="px-5 py-4">วัน / เวลา</th>
-                      <th className="px-5 py-4">ชื่อสินค้า</th>
-                      <th className="px-5 py-4 text-center">ประเภท</th>
-                      <th className="px-5 py-4 text-center">ยอดเดิม</th>
-                      <th className="px-5 py-4 text-center">จำนวนที่เปลี่ยน</th>
-                      <th className="px-5 py-4 text-center">ยอดคงเหลือใหม่</th>
-                      <th className="px-5 py-4">เหตุผล / หมายเหตุ</th>
-                      <th className="px-5 py-4">ผู้ทำรายการ</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#ebd5b3]/40">
-                    {logs.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="px-5 py-12 text-center text-[#8f7565]">
-                          ยังไม่มีประวัติการปรับสต็อก
-                        </td>
-                      </tr>
-                    ) : (
-                      logs.map((log) => (
-                        <tr key={log.id} className="hover:bg-[#faf7f2]/80 transition-colors">
-                          <td className="px-5 py-4 text-[#8f7565] text-xs">
-                            {new Date(log.createdAt).toLocaleDateString('th-TH', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </td>
-                          <td className="px-5 py-4 font-semibold text-[#2c1a0e]">
-                            {log.productName}
-                          </td>
-                          <td className="px-5 py-4 text-center">
-                            {log.action === 'IN' && (
-                              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                                รับเข้า
-                              </span>
-                            )}
-                            {log.action === 'OUT' && (
-                              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800">
-                                เบิกออก
-                              </span>
-                            )}
-                            {log.action === 'INITIAL' && (
-                              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-800">
-                                ยอดยกมา
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4 text-center text-[#8f7565]">{log.oldQuantity}</td>
-                          <td className="px-5 py-4 text-center font-bold">
-                            {log.action === 'OUT' ? `-${log.changeQuantity}` : `+${log.changeQuantity}`}
-                          </td>
-                          <td className="px-5 py-4 text-center font-bold text-[#c85a2b]">{log.newQuantity}</td>
-                          <td className="px-5 py-4 text-[#8f7565]">{log.reason || '-'}</td>
-                          <td className="px-5 py-4 text-xs text-[#8f7565]">{log.userEmail || 'Staff'}</td>
-                        </tr>
-                      ))
+            <div className="space-y-2">
+              {logs.length === 0 ? (
+                <div className="bg-white py-10 rounded-xl text-center text-xs text-[#8f7565] border border-[#ebd5b3]/60">
+                  ยังไม่มีประวัติ
+                </div>
+              ) : (
+                logs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="bg-white rounded-xl p-2.5 border border-[#ebd5b3]/60 shadow-2xs"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-[#2c1a0e] truncate">
+                        {log.productName}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${
+                          log.action === 'IN'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : log.action === 'OUT'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-sky-100 text-sky-800'
+                        }`}
+                      >
+                        {log.action === 'IN' ? 'รับเข้า' : log.action === 'OUT' ? 'เบิกออก' : 'ยกมา'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs mt-1.5 text-[#6e5849]">
+                      <span>
+                        {log.oldQuantity} → <strong className="text-[#c85a2b]">{log.newQuantity}</strong>{' '}
+                        ({log.action === 'OUT' ? `-${log.changeQuantity}` : `+${log.changeQuantity}`})
+                      </span>
+                      <span className="text-[10px] text-[#b09282]">
+                        {new Date(log.createdAt).toLocaleDateString('th-TH', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    {log.reason && (
+                      <p className="text-[10px] text-[#8f7565] mt-0.5">เหตุผล: {log.reason}</p>
                     )}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
       </main>
 
       {/* ========================================================= */}
-      {/* MODAL: เพิ่มสินค้าใหม่ */}
+      {/* 2. APP-LIKE BOTTOM NAVIGATION BAR (ควบคุมได้ด้วยนิ้วโป้ง) */}
+      {/* ========================================================= */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#ebd5b3] shadow-lg">
+        <div className="max-w-md mx-auto grid grid-cols-3 h-14">
+          <button
+            onClick={() => setActiveTab('stock')}
+            className={`flex flex-col items-center justify-center gap-1 transition-all ${
+              activeTab === 'stock' ? 'text-[#c85a2b] font-bold' : 'text-[#8f7565]'
+            }`}
+          >
+            <Package className="w-5 h-5" />
+            <span className="text-[10px]">สต็อกสินค้า</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('cash')}
+            className={`flex flex-col items-center justify-center gap-1 transition-all ${
+              activeTab === 'cash' ? 'text-[#c85a2b] font-bold' : 'text-[#8f7565]'
+            }`}
+          >
+            <DollarSign className="w-5 h-5" />
+            <span className="text-[10px]">เงินสด/ทอน</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`flex flex-col items-center justify-center gap-1 transition-all ${
+              activeTab === 'logs' ? 'text-[#c85a2b] font-bold' : 'text-[#8f7565]'
+            }`}
+          >
+            <History className="w-5 h-5" />
+            <span className="text-[10px]">ประวัติ</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* ========================================================= */}
+      {/* MODAL: เพิ่มสินค้าใหม่ (MOBILE BOTTOM SHEET) */}
       {/* ========================================================= */}
       {isAddProductOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-[#ebd5b3]">
-            <h2 className="text-xl font-bold text-[#2c1a0e] mb-4">✨ เพิ่มสินค้าใหม่</h2>
-            <form onSubmit={handleCreateProduct} className="space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl p-5 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-[#2c1a0e]">✨ เพิ่มสินค้าใหม่</h2>
+              <button
+                onClick={() => setIsAddProductOpen(false)}
+                className="p-1 text-[#8f7565] hover:text-black"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateProduct} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-[#6e5849] mb-1">ชื่อสินค้า</label>
+                <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">ชื่อสินค้า</label>
                 <input
                   type="text"
                   required
                   placeholder="เช่น เมล็ดกาแฟ Ethiopia"
                   value={newProductName}
                   onChange={(e) => setNewProductName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                  className="w-full px-3 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-[#6e5849] mb-1">หมวดหมู่</label>
+                  <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">หมวดหมู่</label>
                   <select
                     value={newProductCategory}
                     onChange={(e) => setNewProductCategory(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                    className="w-full px-2 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs"
                   >
                     <option value="เมล็ดกาแฟ">เมล็ดกาแฟ</option>
                     <option value="วัตถุดิบนม">วัตถุดิบนม</option>
-                    <option value="ชาและผงเครื่องดื่ม">ชาและผงเครื่องดื่ม</option>
+                    <option value="ชาและผงเครื่องดื่ม">ชาและเครื่องดื่ม</option>
                     <option value="บรรจุภัณฑ์">บรรจุภัณฑ์</option>
-                    <option value="ไซรัปและซอส">ไซรัปและซอส</option>
                     <option value="ทั่วไป">ทั่วไป</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#6e5849] mb-1">หน่วยนับ</label>
+                  <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">หน่วยนับ</label>
                   <input
                     type="text"
                     required
-                    placeholder="ถุง, ขวด, กล่อง"
+                    placeholder="ถุง, ขวด, ใบ"
                     value={newProductUnit}
                     onChange={(e) => setNewProductUnit(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                    className="w-full px-3 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-[#6e5849] mb-1">จำนวนเริ่มต้น</label>
+                  <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">จำนวนตั้งต้น</label>
                   <input
                     type="number"
                     min="0"
                     required
                     value={newProductQuantity}
                     onChange={(e) => setNewProductQuantity(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                    className="w-full px-3 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#6e5849] mb-1">จุดเตือนขั้นต่ำ</label>
+                  <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">จุดเตือนขั้นต่ำ</label>
                   <input
                     type="number"
                     min="0"
                     required
                     value={newProductMinStock}
                     onChange={(e) => setNewProductMinStock(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                    className="w-full px-3 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsAddProductOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-[#ebd5b3] text-[#6e5849] text-sm font-medium hover:bg-[#faf7f2]"
+                  className="flex-1 py-2.5 rounded-lg border border-[#ebd5b3] text-[#6e5849] text-xs font-medium"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-2.5 rounded-xl bg-[#c85a2b] hover:bg-[#b04e22] text-white text-sm font-medium shadow-sm transition-all"
+                  className="flex-1 py-2.5 rounded-lg bg-[#c85a2b] text-white text-xs font-bold"
                 >
-                  {loading ? 'กำลังบันทึก...' : 'บันทึกสินค้า'}
+                  {loading ? 'กำลังบันทึก...' : 'บันทึก'}
                 </button>
               </div>
             </form>
@@ -955,60 +861,81 @@ export default function Home() {
       )}
 
       {/* ========================================================= */}
-      {/* MODAL: ปรับสต็อก (รับเข้า / เบิกออก) */}
+      {/* MODAL: ปรับสต็อก (รับเข้า / เบิกออก พร้อมปุ่มด่วน +1, +5) */}
       {/* ========================================================= */}
       {isAdjustStockOpen && selectedProduct && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-[#ebd5b3]">
-            <h2 className="text-xl font-bold text-[#2c1a0e] mb-1">
-              {adjustAction === 'IN' ? '📦 รับเข้าสต็อก' : '📤 เบิกออกสต็อก'}
-            </h2>
-            <p className="text-sm text-[#8f7565] mb-4">
-              สินค้า: <strong className="text-[#2c1a0e]">{selectedProduct.name}</strong> (คงเหลือ {selectedProduct.quantity} {selectedProduct.unit})
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl p-5 max-w-md w-full shadow-2xl animate-in slide-in-from-bottom-5">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-base font-bold text-[#2c1a0e]">
+                {adjustAction === 'IN' ? '📦 รับเข้าสต็อก' : '📤 เบิกออกสต็อก'}
+              </h2>
+              <button
+                onClick={() => setIsAdjustStockOpen(false)}
+                className="p-1 text-[#8f7565] hover:text-black"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-[#8f7565] mb-3">
+              <strong className="text-[#2c1a0e]">{selectedProduct.name}</strong> (คงเหลือ {selectedProduct.quantity} {selectedProduct.unit})
             </p>
 
-            <form onSubmit={handleAdjustStock} className="space-y-4">
+            <form onSubmit={handleAdjustStock} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-[#6e5849] mb-1">
+                <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">
                   จำนวน ({selectedProduct.unit})
                 </label>
                 <input
                   type="number"
                   min="1"
                   required
-                  placeholder="ระบุจำนวน"
+                  placeholder="ระบุตัวเลข"
                   value={adjustQty}
                   onChange={(e) => setAdjustQty(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                  className="w-full px-3 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-sm font-bold text-center"
                 />
+
+                {/* ปุ่มลัดแตะเลขด่วน สำหรับมือถือ */}
+                <div className="grid grid-cols-4 gap-1.5 mt-2">
+                  {[1, 2, 5, 10].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setAdjustQty(String(num))}
+                      className="py-1 bg-[#f5efe6] active:bg-[#ebd5b3] rounded-md text-xs font-semibold text-[#6e5849]"
+                    >
+                      +{num}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#6e5849] mb-1">เหตุผล / หมายเหตุ</label>
+                <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">หมายเหตุ</label>
                 <input
                   type="text"
-                  placeholder={adjustAction === 'IN' ? 'เช่น ซื้อของมาเพิ่ม' : 'เช่น ชงกาแฟหน้าร้าน, วัตถุดิบหมดอายุ'}
+                  placeholder={adjustAction === 'IN' ? 'เช่น ซื้อของมาเพิ่ม' : 'เช่น ชงหน้าร้าน'}
                   value={adjustReason}
                   onChange={(e) => setAdjustReason(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                  className="w-full px-3 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs"
                 />
               </div>
 
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsAdjustStockOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-[#ebd5b3] text-[#6e5849] text-sm font-medium hover:bg-[#faf7f2]"
+                  className="flex-1 py-2.5 rounded-lg border border-[#ebd5b3] text-[#6e5849] text-xs font-medium"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`flex-1 py-2.5 rounded-xl text-white text-sm font-medium shadow-sm transition-all ${
-                    adjustAction === 'IN'
-                      ? 'bg-emerald-600 hover:bg-emerald-700'
-                      : 'bg-amber-600 hover:bg-amber-700'
+                  className={`flex-1 py-2.5 rounded-lg text-white text-xs font-bold ${
+                    adjustAction === 'IN' ? 'bg-emerald-600' : 'bg-amber-600'
                   }`}
                 >
                   {loading ? 'กำลังบันทึก...' : `ยืนยัน${adjustAction === 'IN' ? 'รับเข้า' : 'เบิกออก'}`}
@@ -1020,27 +947,35 @@ export default function Home() {
       )}
 
       {/* ========================================================= */}
-      {/* MODAL: บันทึกเงินสด / เงินทอน / ค่าใช้จ่าย */}
+      {/* MODAL: บันทึกเงินสด / เงินทอน / สั่งน้ำแข็ง */}
       {/* ========================================================= */}
       {isAddCashOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-[#ebd5b3]">
-            <h2 className="text-xl font-bold text-[#2c1a0e] mb-4">💵 บันทึกรายการเงินสด</h2>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl p-5 max-w-md w-full shadow-2xl animate-in slide-in-from-bottom-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-[#2c1a0e]">💵 บันทึกเงินสด</h2>
+              <button
+                onClick={() => setIsAddCashOpen(false)}
+                className="p-1 text-[#8f7565] hover:text-black"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <form onSubmit={handleCreateCash} className="space-y-4">
+            <form onSubmit={handleCreateCash} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-[#6e5849] mb-1">ประเภทรายการ</label>
-                <div className="grid grid-cols-3 gap-2">
+                <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">ประเภท</label>
+                <div className="grid grid-cols-3 gap-1.5">
                   <button
                     type="button"
                     onClick={() => {
                       setCashType('EXPENSE');
                       setCashCategory('สั่งน้ำแข็ง');
                     }}
-                    className={`py-2 rounded-xl text-xs font-semibold border transition-all ${
+                    className={`py-2 rounded-lg text-xs font-bold border ${
                       cashType === 'EXPENSE'
-                        ? 'bg-rose-50 border-rose-300 text-rose-700'
-                        : 'border-[#ebd5b3] text-[#6e5849] hover:bg-[#faf7f2]'
+                        ? 'bg-rose-50 border-rose-400 text-rose-700'
+                        : 'border-[#ebd5b3] text-[#6e5849]'
                     }`}
                   >
                     จ่ายออก
@@ -1051,10 +986,10 @@ export default function Home() {
                       setCashType('CHANGE_FUND');
                       setCashCategory('เงินทอนเปิดร้าน');
                     }}
-                    className={`py-2 rounded-xl text-xs font-semibold border transition-all ${
+                    className={`py-2 rounded-lg text-xs font-bold border ${
                       cashType === 'CHANGE_FUND'
-                        ? 'bg-sky-50 border-sky-300 text-sky-700'
-                        : 'border-[#ebd5b3] text-[#6e5849] hover:bg-[#faf7f2]'
+                        ? 'bg-sky-50 border-sky-400 text-sky-700'
+                        : 'border-[#ebd5b3] text-[#6e5849]'
                     }`}
                   >
                     เงินทอน
@@ -1065,10 +1000,10 @@ export default function Home() {
                       setCashType('INCOME');
                       setCashCategory('ยอดขายเงินสด');
                     }}
-                    className={`py-2 rounded-xl text-xs font-semibold border transition-all ${
+                    className={`py-2 rounded-lg text-xs font-bold border ${
                       cashType === 'INCOME'
-                        ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                        : 'border-[#ebd5b3] text-[#6e5849] hover:bg-[#faf7f2]'
+                        ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
+                        : 'border-[#ebd5b3] text-[#6e5849]'
                     }`}
                   >
                     รายรับ
@@ -1077,18 +1012,17 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#6e5849] mb-1">หมวดหมู่</label>
+                <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">หมวดหมู่</label>
                 <select
                   value={cashCategory}
                   onChange={(e) => setCashCategory(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                  className="w-full px-2 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs"
                 >
                   {cashType === 'EXPENSE' && (
                     <>
                       <option value="สั่งน้ำแข็ง">สั่งน้ำแข็ง</option>
-                      <option value="ซื้อวัตถุดิบเร่งด่วน">ซื้อวัตถุดิบเร่งด่วน (เช่น มะนาว, นม)</option>
-                      <option value="ของใช้และอุปกรณ์ทำความสะอาด">ของใช้และอุปกรณ์ทำความสะอาด</option>
-                      <option value="ค่าซ่อมแซม">ค่าซ่อมแซม</option>
+                      <option value="ซื้อวัตถุดิบเร่งด่วน">ซื้อวัตถุดิบเร่งด่วน (มะนาว/นม)</option>
+                      <option value="ของใช้และอุปกรณ์">ของใช้และอุปกรณ์</option>
                       <option value="ค่าใช้จ่ายอื่นๆ">ค่าใช้จ่ายอื่นๆ</option>
                     </>
                   )}
@@ -1108,7 +1042,7 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#6e5849] mb-1">จำนวนเงิน (บาท)</label>
+                <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">จำนวนเงิน (บาท)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -1117,43 +1051,49 @@ export default function Home() {
                   placeholder="เช่น 20 หรือ 500"
                   value={cashAmount}
                   onChange={(e) => setCashAmount(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                  className="w-full px-3 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-sm font-bold text-center"
                 />
+
+                {/* แตะปุ่มลัดระบุจำนวนเงิน */}
+                {cashType === 'EXPENSE' && cashCategory === 'สั่งน้ำแข็ง' && (
+                  <div className="grid grid-cols-3 gap-1.5 mt-2">
+                    {[20, 40, 60].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        onClick={() => setCashAmount(String(amt))}
+                        className="py-1 bg-[#f5efe6] active:bg-[#ebd5b3] rounded-md text-xs font-semibold text-[#6e5849]"
+                      >
+                        {amt} บาท
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#6e5849] mb-1">รายละเอียด / หมายเหตุ</label>
+                <label className="block text-[11px] font-semibold text-[#6e5849] mb-1">หมายเหตุ (ถ้ามี)</label>
                 <input
                   type="text"
                   placeholder="เช่น น้ำแข็งหลอด 1 กระสอบ"
                   value={cashNote}
                   onChange={(e) => setCashNote(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
+                  className="w-full px-3 py-2 bg-[#faf7f2] border border-[#ebd5b3] rounded-lg text-xs"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#6e5849] mb-1">ผู้บันทึก</label>
-                <input
-                  type="text"
-                  value={cashRecordedBy}
-                  onChange={(e) => setCashRecordedBy(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-[#faf7f2] border border-[#ebd5b3] rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#c85a2b]"
-                />
-              </div>
-
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsAddCashOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-[#ebd5b3] text-[#6e5849] text-sm font-medium hover:bg-[#faf7f2]"
+                  className="flex-1 py-2.5 rounded-lg border border-[#ebd5b3] text-[#6e5849] text-xs font-medium"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-2.5 rounded-xl bg-[#1b6b47] hover:bg-[#155638] text-white text-sm font-medium shadow-sm transition-all"
+                  className="flex-1 py-2.5 rounded-lg bg-[#1b6b47] text-white text-xs font-bold"
                 >
                   {loading ? 'กำลังบันทึก...' : 'บันทึกรายการ'}
                 </button>
