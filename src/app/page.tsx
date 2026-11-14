@@ -321,7 +321,7 @@ export default function Home() {
               className="px-2.5 py-1.5 bg-[#b83b3b] active:scale-95 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>ลงรายจ่าย</span>
+              <span>+ บันทึกเงิน</span>
             </button>
           )}
         </div>
@@ -546,33 +546,6 @@ export default function Home() {
         {/* ========================================================= */}
         {activeTab === 'cash' && (
           <div className="space-y-2">
-            {/* Quick 2-button bar */}
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  setCashType('CHANGE_FUND');
-                  setCashCategory('เงินทอนเปิดร้าน');
-                  setIsAddCashOpen(true);
-                }}
-                className="py-2 px-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs flex items-center justify-center gap-1 active:scale-98"
-              >
-                <Coins className="w-3.5 h-3.5 text-emerald-600" />
-                <span>+ เงินเปิดร้าน</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setCashType('EXPENSE');
-                  setCashCategory('สั่งน้ำแข็ง');
-                  setIsAddCashOpen(true);
-                }}
-                className="py-2 px-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-bold text-xs flex items-center justify-center gap-1 active:scale-98"
-              >
-                <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />
-                <span>- รายจ่ายวันนี้</span>
-              </button>
-            </div>
-
             {/* Compact Transaction List */}
             <div className="space-y-1.5">
               {cashTransactions.length === 0 ? (
