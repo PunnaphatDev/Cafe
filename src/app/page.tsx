@@ -12,6 +12,9 @@ import {
   Coins,
   Trash2,
   X,
+  AlertTriangle,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 
 interface Product {
@@ -96,6 +99,40 @@ export default function Home() {
   const showAlert = (type: 'success' | 'error', text: string) => {
     setAlertMsg({ type, text });
     setTimeout(() => setAlertMsg(null), 2500);
+  };
+
+  // Custom Confirmation Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'ยืนยัน',
+    cancelText: 'ยกเลิก',
+    onConfirm: () => {},
+  });
+
+  const askConfirmation = (opts: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: opts.title,
+      message: opts.message,
+      confirmText: opts.confirmText || 'ยืนยัน',
+      cancelText: opts.cancelText || 'ยกเลิก',
+      onConfirm: opts.onConfirm,
+    });
   };
 
   // Fetch Data
@@ -198,18 +235,26 @@ export default function Home() {
   };
 
   // Handle Delete Product
-  const handleDeleteProduct = async (id: string, name: string) => {
-    if (!confirm(`ต้องการลบ "${name}" ใช่หรือไม่?`)) return;
-    try {
-      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        showAlert('success', 'ลบสินค้าเรียบร้อย');
-        fetchProducts();
-      }
-    } catch (e: any) {
-      showAlert('error', e.message);
-    }
+  const handleDeleteProduct = (id: string, name: string) => {
+    askConfirmation({
+      title: 'ยืนยันการลบสินค้า',
+      message: `ต้องการลบ "${name}" ออกจากระบบใช่หรือไม่?`,
+      confirmText: 'ลบสินค้า',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            showAlert('success', `ลบ "${name}" เรียบร้อย`);
+            fetchProducts();
+          } else {
+            showAlert('error', data.error || 'เกิดข้อผิดพลาดในการลบ');
+          }
+        } catch (e: any) {
+          showAlert('error', e.message);
+        }
+      },
+    });
   };
 
   // Handle Create Cash
@@ -246,18 +291,27 @@ export default function Home() {
   };
 
   // Handle Delete Cash
-  const handleDeleteCash = async (id: string) => {
-    if (!confirm('ยืนยันลบรายการนี้ใช่หรือไม่?')) return;
-    try {
-      const res = await fetch(`/api/cash/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        showAlert('success', 'ลบรายการเรียบร้อย');
-        fetchCash();
-      }
-    } catch (e: any) {
-      showAlert('error', e.message);
-    }
+  const handleDeleteCash = (id: string, category?: string, amount?: number) => {
+    const detail = category && amount ? ` "${category}" (฿${amount.toLocaleString()})` : 'นี้';
+    askConfirmation({
+      title: 'ยืนยันการลบรายการเงิน',
+      message: `ต้องการลบรายการ${detail} ใช่หรือไม่?`,
+      confirmText: 'ลบรายการ',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/cash/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            showAlert('success', 'ลบรายการเรียบร้อย');
+            fetchCash();
+          } else {
+            showAlert('error', data.error || 'เกิดข้อผิดพลาดในการลบ');
+          }
+        } catch (e: any) {
+          showAlert('error', e.message);
+        }
+      },
+    });
   };
 
   // แยกกลุ่ม: หมด (Out), ควรเติม (Low), ยังมีอยู่ (Normal)
@@ -311,15 +365,20 @@ export default function Home() {
 
       {/* Alert Notification Toast */}
       {alertMsg && (
-        <div className="fixed top-14 left-4 right-4 z-50 animate-in fade-in">
+        <div className="fixed top-14 left-4 right-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           <div
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl shadow-md border text-xs font-semibold ${
+            className={`max-w-md mx-auto flex items-center gap-2 px-3.5 py-2.5 rounded-xl shadow-lg border text-xs font-semibold ${
               alertMsg.type === 'success'
                 ? 'bg-[#eefbf2] border-[#a5d6a7] text-[#1e612f]'
                 : 'bg-[#fdf2f2] border-[#f5c6cb] text-[#842029]'
             }`}
           >
-            <span>{alertMsg.text}</span>
+            {alertMsg.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span className="flex-1">{alertMsg.text}</span>
           </div>
         </div>
       )}
@@ -825,7 +884,7 @@ export default function Home() {
                           {isChangeFund ? '+' : '-'}฿{tx.amount.toLocaleString()}
                         </p>
                         <button
-                          onClick={() => handleDeleteCash(tx.id)}
+                          onClick={() => handleDeleteCash(tx.id, tx.category, tx.amount)}
                           className="text-[#b49f91] active:text-rose-600 p-0.5"
                         >
                           <Trash2 className="w-3 h-3 inline" />
@@ -1203,6 +1262,52 @@ export default function Home() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL: ยืนยันการทำรายการ (Custom Confirmation Dialog) */}
+      {/* ========================================================= */}
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl p-4 max-w-xs w-full shadow-2xl border border-[#ebd5b3] text-center animate-in zoom-in-95 duration-150">
+            {/* Warning Icon Badge */}
+            <div className="w-12 h-12 mx-auto mb-2.5 rounded-full flex items-center justify-center bg-rose-50 border border-rose-200 text-rose-600">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+
+            {/* Title */}
+            <h3 className="text-sm font-bold text-[#2c1a0e] mb-1">
+              {confirmDialog.title}
+            </h3>
+
+            {/* Message */}
+            <p className="text-xs text-[#6e5849] leading-relaxed mb-4">
+              {confirmDialog.message}
+            </p>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+                className="py-2 px-3 rounded-xl border border-[#ebd5b3] text-[#6e5849] text-xs font-semibold hover:bg-[#faf7f2] active:scale-95 transition-all"
+              >
+                {confirmDialog.cancelText || 'ยกเลิก'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+                  confirmDialog.onConfirm();
+                }}
+                className="py-2 px-3 rounded-xl bg-[#b83b3b] text-white text-xs font-bold shadow-2xs hover:bg-[#a13232] active:scale-95 transition-all"
+              >
+                {confirmDialog.confirmText || 'ยืนยัน'}
+              </button>
+            </div>
           </div>
         </div>
       )}
