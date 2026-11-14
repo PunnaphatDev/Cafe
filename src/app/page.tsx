@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
+  LayoutDashboard,
   Package,
   DollarSign,
-  History,
   Plus,
   Minus,
   Search,
@@ -18,6 +18,10 @@ import {
   X,
   WalletCards,
   ShoppingBag,
+  Snowflake,
+  TrendingDown,
+  ArrowRight,
+  Clock
 } from 'lucide-react';
 
 interface Product {
@@ -63,7 +67,8 @@ interface CashSummary {
 }
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'stock' | 'cash' | 'logs'>('stock');
+  // หน้าแรกที่เปิดมาจะเป็น 'dashboard'
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'stock' | 'cash'>('dashboard');
 
   // Stock State
   const [products, setProducts] = useState<Product[]>([]);
@@ -101,7 +106,7 @@ export default function Home() {
 
   // Logs State
   const [logs, setLogs] = useState<StockLog[]>([]);
-  const [searchLogs, setSearchLogs] = useState('');
+  const [todayStr, setTodayStr] = useState('');
 
   // Loading & Alerts
   const [loading, setLoading] = useState(false);
@@ -138,7 +143,7 @@ export default function Home() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch(`/api/logs?search=${encodeURIComponent(searchLogs)}`);
+      const res = await fetch('/api/logs');
       const data = await res.json();
       if (data.success) setLogs(data.data);
     } catch (e) {
@@ -146,11 +151,23 @@ export default function Home() {
     }
   };
 
+  // Fetch all on initial load for Dashboard
+  useEffect(() => {
+    setTodayStr(new Date().toLocaleDateString('th-TH', { month: 'short', day: 'numeric' }));
+    fetchProducts();
+    fetchCash();
+    fetchLogs();
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'stock') fetchProducts();
     if (activeTab === 'cash') fetchCash();
-    if (activeTab === 'logs') fetchLogs();
-  }, [activeTab, searchStock, selectedCategory, searchCash, searchLogs]);
+    if (activeTab === 'dashboard') {
+      fetchProducts();
+      fetchCash();
+      fetchLogs();
+    }
+  }, [activeTab, searchStock, selectedCategory, searchCash]);
 
   // Handle Add Product
   const handleCreateProduct = async (e: React.FormEvent) => {
@@ -207,6 +224,7 @@ export default function Home() {
         setAdjustQty('');
         setAdjustReason('');
         fetchProducts();
+        fetchLogs();
       } else {
         showAlert('error', data.error || 'เกิดข้อผิดพลาด');
       }
@@ -281,8 +299,9 @@ export default function Home() {
   };
 
   // Stat Calculations
-  const lowStockCount = products.filter(p => p.quantity > 0 && p.quantity <= p.minStock).length;
-  const outOfStockCount = products.filter(p => p.quantity === 0).length;
+  const lowStockProducts = products.filter(p => p.quantity > 0 && p.quantity <= p.minStock);
+  const outOfStockProducts = products.filter(p => p.quantity === 0);
+  const urgentRestockItems = [...outOfStockProducts, ...lowStockProducts];
 
   return (
     <div className="min-h-screen bg-[#faf7f2] flex flex-col font-sans max-w-full overflow-x-hidden pb-20">
@@ -297,12 +316,13 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-sm font-bold text-[#2c1a0e] leading-none">
-                AUSTIN <span className="text-[#c85a2b] font-medium text-[11px]">CAFE</span>
+                AUSTIN <span className="text-[#c85a2b] font-medium text-[11px]">CAT CAFE</span>
               </h1>
               <p className="text-[9px] text-[#8a7263] leading-none mt-0.5">SAFE • CALM • COZY</p>
             </div>
           </div>
 
+          {/* Quick Action Button at Top */}
           {activeTab === 'stock' ? (
             <button
               onClick={() => setIsAddProductOpen(true)}
@@ -348,66 +368,161 @@ export default function Home() {
       )}
 
       {/* ========================================================= */}
-      {/* 2. COMPACT SUMMARY BAR (พอดีตา ไม่ใหญ่เทอะทะ) */}
+      {/* MAIN CONTAINER */}
       {/* ========================================================= */}
-      <section className="max-w-md mx-auto px-3.5 pt-3 pb-1 w-full">
-        {activeTab === 'stock' ? (
-          <div className="grid grid-cols-2 gap-2 bg-white p-2.5 rounded-xl border border-[#ebd5b3]/70 shadow-2xs">
-            <div className="flex items-center gap-2.5 px-1">
-              <div className="w-8 h-8 rounded-lg bg-[#faf3ea] flex items-center justify-center text-[#c85a2b] shrink-0">
-                <ShoppingBag className="w-4 h-4" />
+      <main className="max-w-md mx-auto px-3.5 py-2.5 w-full flex-1">
+        {/* ========================================================= */}
+        {/* TAB 1: DASHBOARD (หน้าแรกที่เปิดมาจะเห็นทันที) */}
+        {/* ========================================================= */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-3">
+            {/* 1. สรุปเงินสดหน้าร้านวันนี้ */}
+            <div className="bg-white p-3 rounded-2xl border border-[#ebd5b3]/70 shadow-2xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#2c1a0e] flex items-center gap-1.5">
+                  <Coins className="w-4 h-4 text-[#c85a2b]" />
+                  <span>สรุปเงินสดวันนี้</span>
+                </span>
+                <span className="text-[10px] text-[#8a7263]">
+                  {todayStr || 'วันนี้'}
+                </span>
               </div>
-              <div>
-                <p className="text-[10px] text-[#8a7263] leading-none">สินค้าทั้งหมด</p>
-                <p className="text-base font-bold text-[#2c1a0e] mt-0.5 leading-tight">{products.length} รายการ</p>
+
+              {/* 2 กล่อง: เงินเปิดร้าน & รายจ่ายวันนี้ */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-[#fcfbf9] p-2 rounded-xl border border-[#f0e4d0]">
+                  <p className="text-[10px] text-emerald-800 leading-none">เงินเปิดร้าน</p>
+                  <p className="text-lg font-black text-emerald-700 mt-1">
+                    ฿{cashSummary.todayChangeFund.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="bg-[#fcfbf9] p-2 rounded-xl border border-[#f0e4d0]">
+                  <p className="text-[10px] text-rose-800 leading-none">รายจ่ายวันนี้</p>
+                  <p className="text-lg font-black text-rose-600 mt-1">
+                    ฿{cashSummary.todayExpense.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* เงินสดคงเหลือสุทธิ */}
+              <div className="bg-[#faece5] p-2.5 rounded-xl border border-[#ebd5b3] flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold text-[#8a583a]">เงินสดในลิ้นชักปัจจุบัน</p>
+                  <p className="text-xl font-black text-[#2c1a0e] mt-0.5">
+                    ฿{(cashSummary.todayChangeFund - cashSummary.todayExpense).toLocaleString()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-[#8a583a]">สั่งน้ำแข็งสะสม</p>
+                  <p className="text-xs font-bold text-sky-700 mt-0.5">
+                    ฿{cashSummary.totalIceExpense.toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 px-1 border-l border-[#ebd5b3]/60">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-700 shrink-0">
-                <AlertTriangle className="w-4 h-4" />
+            {/* 2. สรุปสถานะสต็อกสินค้า */}
+            <div className="bg-white p-3 rounded-2xl border border-[#ebd5b3]/70 shadow-2xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#2c1a0e] flex items-center gap-1.5">
+                  <Package className="w-4 h-4 text-[#c85a2b]" />
+                  <span>สถานะสต็อกสินค้า</span>
+                </span>
+                <button
+                  onClick={() => setActiveTab('stock')}
+                  className="text-[10px] text-[#c85a2b] font-bold flex items-center gap-0.5"
+                >
+                  <span>ดูทั้งหมด ({products.length})</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
               </div>
-              <div>
-                <p className="text-[10px] text-amber-800 leading-none">ต้องสั่งเพิ่ม</p>
-                <p className="text-base font-bold text-amber-800 mt-0.5 leading-tight">
-                  {lowStockCount + outOfStockCount} รายการ
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            <div className="grid grid-cols-2 gap-2 bg-white p-2.5 rounded-xl border border-[#ebd5b3]/70 shadow-2xs">
-              <div>
-                <p className="text-[10px] text-emerald-800 leading-none">เงินเปิดร้าน</p>
-                <p className="text-base font-bold text-emerald-700 mt-0.5">
-                  ฿{cashSummary.todayChangeFund.toLocaleString()}
-                </p>
-              </div>
-              <div className="border-l border-[#ebd5b3]/60 pl-2.5">
-                <p className="text-[10px] text-rose-800 leading-none">รายจ่ายวันนี้</p>
-                <p className="text-base font-bold text-rose-600 mt-0.5">
-                  ฿{cashSummary.todayExpense.toLocaleString()}
-                </p>
-              </div>
+
+              {/* เตือนสินค้าใกล้หมด / หมดแล้ว */}
+              {urgentRestockItems.length === 0 ? (
+                <div className="py-3 px-3 bg-emerald-50/50 rounded-xl border border-emerald-200/60 text-center">
+                  <p className="text-xs font-bold text-emerald-800 flex items-center justify-center gap-1">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>สต็อกสินค้าพร้อมขายทุกรายการ</span>
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-amber-800">
+                    ⚠️ สินค้าที่ต้องสั่งเพิ่ม ({urgentRestockItems.length} รายการ):
+                  </p>
+                  {urgentRestockItems.slice(0, 4).map((p) => {
+                    const isOut = p.quantity === 0;
+                    return (
+                      <div
+                        key={p.id}
+                        className={`p-2 rounded-xl border flex items-center justify-between text-xs ${
+                          isOut ? 'bg-rose-50/50 border-rose-200' : 'bg-amber-50/40 border-amber-200'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-[#2c1a0e] truncate">{p.name}</p>
+                          <p className="text-[10px] text-[#8a7263]">
+                            คงเหลือ: <strong className={isOut ? 'text-rose-700' : 'text-amber-800'}>{p.quantity}</strong> {p.unit} (เตือน: {p.minStock})
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(p);
+                            setAdjustAction('IN');
+                            setIsAdjustStockOpen(true);
+                          }}
+                          className="px-2 py-1 rounded-md bg-emerald-600 active:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs shrink-0"
+                        >
+                          + เติม
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            <div className="bg-[#fceddf] px-3 py-1.5 rounded-lg border border-[#ebd5b3] flex items-center justify-between text-xs">
-              <span className="text-[11px] font-medium text-[#7d5032]">เงินสดในลิ้นชักสุทธิ:</span>
-              <span className="font-bold text-sm text-[#2c1a0e]">
-                ฿{(cashSummary.todayChangeFund - cashSummary.todayExpense).toLocaleString()}
+            {/* 3. ประวัติการทำรายการล่าสุด (Recent Activity) */}
+            <div className="bg-white p-3 rounded-2xl border border-[#ebd5b3]/70 shadow-2xs space-y-2">
+              <span className="text-xs font-bold text-[#2c1a0e] flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-[#8a7263]" />
+                <span>การเคลื่อนไหวล่าสุด</span>
               </span>
+
+              {logs.length === 0 && cashTransactions.length === 0 ? (
+                <p className="text-xs text-[#8a7263] py-4 text-center">ยังไม่มีประวัติการทำรายการ</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {logs.slice(0, 4).map((log) => (
+                    <div
+                      key={log.id}
+                      className="p-2 rounded-xl bg-[#fcfbf9] border border-[#f0e4d0] flex items-center justify-between text-xs"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-[#2c1a0e] truncate">{log.productName}</p>
+                        <p className="text-[10px] text-[#8a7263]">
+                          {log.action === 'IN' ? 'เติมของ' : log.action === 'OUT' ? 'เบิกใช้' : 'ยอดยกมา'} ({log.oldQuantity} → {log.newQuantity})
+                        </p>
+                      </div>
+                      <span className="text-[9px] text-[#b49f91] shrink-0">
+                        {new Date(log.createdAt).toLocaleDateString('th-TH', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
-      </section>
 
-      {/* ========================================================= */}
-      {/* 3. MAIN LIST (COMPACT, SLEEK CARDS - 4-5 ITEMS PER SCREEN) */}
-      {/* ========================================================= */}
-      <main className="max-w-md mx-auto px-3.5 py-2 w-full flex-1">
         {/* ========================================================= */}
-        {/* TAB 1: สต็อกสินค้า */}
+        {/* TAB 2: สต็อกสินค้า */}
         {/* ========================================================= */}
         {activeTab === 'stock' && (
           <div className="space-y-2">
@@ -438,7 +553,7 @@ export default function Home() {
               </select>
             </div>
 
-            {/* SLEEK COMPACT PRODUCT CARDS */}
+            {/* Product Cards */}
             <div className="space-y-1.5">
               {products.length === 0 ? (
                 <div className="bg-white py-10 rounded-xl text-center text-xs text-[#8a7263] border border-[#ebd5b3]">
@@ -488,7 +603,6 @@ export default function Home() {
 
                       {/* Bottom Row: Quantity + Action Buttons */}
                       <div className="mt-2 pt-1.5 border-t border-[#f5ecde] flex items-center justify-between gap-2">
-                        {/* Compact Quantity */}
                         <div className="flex items-baseline gap-1">
                           <span className="text-base font-extrabold text-[#2c1a0e] leading-none">
                             {item.quantity}
@@ -498,7 +612,6 @@ export default function Home() {
                           </span>
                         </div>
 
-                        {/* Action Buttons: Neat, single-line text, thumb-friendly */}
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             onClick={() => {
@@ -542,10 +655,18 @@ export default function Home() {
         )}
 
         {/* ========================================================= */}
-        {/* TAB 2: เงินเปิดร้าน & รายจ่ายวันนี้ */}
+        {/* TAB 3: เงินเปิดร้าน & รายจ่ายวันนี้ */}
         {/* ========================================================= */}
         {activeTab === 'cash' && (
           <div className="space-y-2">
+            {/* สรุปเงินสดสั้นๆ */}
+            <div className="bg-[#fceddf] px-3 py-2 rounded-xl border border-[#ebd5b3] flex items-center justify-between text-xs">
+              <span className="text-[11px] font-medium text-[#7d5032]">เงินสดในลิ้นชักสุทธิ:</span>
+              <span className="font-bold text-sm text-[#2c1a0e]">
+                ฿{(cashSummary.todayChangeFund - cashSummary.todayExpense).toLocaleString()}
+              </span>
+            </div>
+
             {/* Compact Transaction List */}
             <div className="space-y-1.5">
               {cashTransactions.length === 0 ? (
@@ -610,81 +731,23 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        {/* ========================================================= */}
-        {/* TAB 3: ประวัติ (Logs) */}
-        {/* ========================================================= */}
-        {activeTab === 'logs' && (
-          <div className="space-y-2">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-[#a38b7d] absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="ค้นหาในประวัติ..."
-                value={searchLogs}
-                onChange={(e) => setSearchLogs(e.target.value)}
-                className="w-full pl-8 pr-2.5 py-1.5 bg-white border border-[#ebd5b3] rounded-lg text-xs focus:outline-hidden"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              {logs.length === 0 ? (
-                <div className="bg-white py-10 rounded-xl text-center text-xs text-[#8a7263] border border-[#ebd5b3]">
-                  ยังไม่มีประวัติ
-                </div>
-              ) : (
-                logs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="bg-white rounded-xl p-2.5 border border-[#ebd5b3]/70 shadow-2xs"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-[#2c1a0e] truncate">
-                        {log.productName}
-                      </span>
-                      <span
-                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                          log.action === 'IN'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : log.action === 'OUT'
-                            ? 'bg-rose-50 text-rose-700'
-                            : 'bg-sky-50 text-sky-700'
-                        }`}
-                      >
-                        {log.action === 'IN' ? 'เติม' : log.action === 'OUT' ? 'เบิก' : 'ยกมา'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] mt-1 text-[#6e5849]">
-                      <span>
-                        {log.oldQuantity} → <strong className="text-[#c85a2b]">{log.newQuantity}</strong>{' '}
-                        ({log.action === 'OUT' ? `-${log.changeQuantity}` : `+${log.changeQuantity}`})
-                      </span>
-                      <span className="text-[9px] text-[#b49f91]">
-                        {new Date(log.createdAt).toLocaleDateString('th-TH', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </div>
-                    {log.reason && (
-                      <p className="text-[10px] text-[#8a7263] mt-0.5">เหตุผล: {log.reason}</p>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
       </main>
 
       {/* ========================================================= */}
-      {/* 4. COMPACT BOTTOM BAR */}
+      {/* 4. COMPACT BOTTOM BAR (Dashboard เป็นแท็บแรก) */}
       {/* ========================================================= */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#ebd5b3] shadow-md">
         <div className="max-w-md mx-auto grid grid-cols-3 h-13">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex flex-col items-center justify-center gap-0.5 transition-all ${
+              activeTab === 'dashboard' ? 'text-[#c85a2b] font-bold' : 'text-[#8a7263]'
+            }`}
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            <span className="text-[10px]">แดชบอร์ด</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('stock')}
             className={`flex flex-col items-center justify-center gap-0.5 transition-all ${
@@ -702,17 +765,7 @@ export default function Home() {
             }`}
           >
             <DollarSign className="w-4 h-4" />
-            <span className="text-[10px]">เงินเปิดร้าน/จ่าย</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('logs')}
-            className={`flex flex-col items-center justify-center gap-0.5 transition-all ${
-              activeTab === 'logs' ? 'text-[#c85a2b] font-bold' : 'text-[#8a7263]'
-            }`}
-          >
-            <History className="w-4 h-4" />
-            <span className="text-[10px]">ประวัติ</span>
+            <span className="text-[10px]">เงินสด/ทอน</span>
           </button>
         </div>
       </nav>
