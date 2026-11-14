@@ -55,7 +55,8 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchStock, setSearchStock] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
-  const [dashboardStatusFilter, setDashboardStatusFilter] = useState<'ALL' | 'OUT' | 'LOW' | 'NORMAL'>('ALL');
+  // ตัวกรอง Dashboard: มีแค่ 2 สถานะหลัก คือ 'REFILL' (ควรเติม) และ 'AVAILABLE' (ยังมีอยู่) หรือ 'ALL'
+  const [dashboardStatusFilter, setDashboardStatusFilter] = useState<'ALL' | 'REFILL' | 'AVAILABLE'>('ALL');
 
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isAdjustStockOpen, setIsAdjustStockOpen] = useState(false);
@@ -258,18 +259,15 @@ export default function Home() {
     }
   };
 
-  // Stock Status Categorization
-  const outOfStockItems = products.filter(p => p.quantity === 0);
-  const lowStockItems = products.filter(p => p.quantity > 0 && p.quantity <= p.minStock);
-  const normalStockItems = products.filter(p => p.quantity > p.minStock);
+  // Stock Status Categorization: มีแค่ 2 กลุ่ม (ควรเติม vs ยังมีอยู่)
+  const refillItems = products.filter(p => p.quantity <= p.minStock); // รวมทั้ง 0 และ <= minStock
+  const availableItems = products.filter(p => p.quantity > p.minStock);
 
   const displayedDashboardItems =
-    dashboardStatusFilter === 'OUT'
-      ? outOfStockItems
-      : dashboardStatusFilter === 'LOW'
-      ? lowStockItems
-      : dashboardStatusFilter === 'NORMAL'
-      ? normalStockItems
+    dashboardStatusFilter === 'REFILL'
+      ? refillItems
+      : dashboardStatusFilter === 'AVAILABLE'
+      ? availableItems
       : products;
 
   return (
@@ -340,11 +338,11 @@ export default function Home() {
       {/* ========================================================= */}
       <main className="max-w-md mx-auto px-3.5 py-2.5 w-full flex-1">
         {/* ========================================================= */}
-        {/* TAB 1: DASHBOARD (โชว์ หมด / ควรเติม / ปกติ - กดเบิกไม่ได้) */}
+        {/* TAB 1: DASHBOARD (มีแค่ "ควรเติม" กับ "ยังมีอยู่") */}
         {/* ========================================================= */}
         {activeTab === 'dashboard' && (
           <div className="space-y-2.5">
-            {/* กล่องเลือกดูสถานะ 3 กลุ่ม ชัดเจน: หมด / ควรเติม / ปกติ */}
+            {/* กล่องเลือกดูสถานะ: ทั้งหมด / ควรเติม / ยังมีอยู่ */}
             <div className="bg-white p-2.5 rounded-2xl border border-[#ebd5b3]/70 shadow-2xs space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#2c1a0e] flex items-center gap-1.5">
@@ -356,11 +354,11 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* 3 ตัวกรองสถานะ: หมด / ควรเติม / ปกติ */}
-              <div className="grid grid-cols-4 gap-1">
+              {/* 3 ตัวกรองสถานะ: ทั้งหมด / 🟡 ควรเติม / 🟢 ยังมีอยู่ */}
+              <div className="grid grid-cols-3 gap-1.5">
                 <button
                   onClick={() => setDashboardStatusFilter('ALL')}
-                  className={`py-1.5 rounded-xl text-[11px] font-bold border transition-all text-center ${
+                  className={`py-1.5 rounded-xl text-xs font-bold border transition-all text-center ${
                     dashboardStatusFilter === 'ALL'
                       ? 'bg-[#2c1a0e] text-white border-[#2c1a0e]'
                       : 'border-[#ebd5b3] bg-[#faf7f2] text-[#6e5849]'
@@ -370,41 +368,30 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={() => setDashboardStatusFilter('OUT')}
-                  className={`py-1.5 rounded-xl text-[11px] font-bold border transition-all text-center ${
-                    dashboardStatusFilter === 'OUT'
-                      ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
-                      : 'border-rose-200 bg-rose-50 text-rose-800'
-                  }`}
-                >
-                  🔴 หมด ({outOfStockItems.length})
-                </button>
-
-                <button
-                  onClick={() => setDashboardStatusFilter('LOW')}
-                  className={`py-1.5 rounded-xl text-[11px] font-bold border transition-all text-center ${
-                    dashboardStatusFilter === 'LOW'
+                  onClick={() => setDashboardStatusFilter('REFILL')}
+                  className={`py-1.5 rounded-xl text-xs font-bold border transition-all text-center ${
+                    dashboardStatusFilter === 'REFILL'
                       ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
-                      : 'border-amber-200 bg-amber-50 text-amber-800'
+                      : 'border-amber-200 bg-amber-50 text-amber-900'
                   }`}
                 >
-                  🟡 ควรเติม ({lowStockItems.length})
+                  🟡 ควรเติม ({refillItems.length})
                 </button>
 
                 <button
-                  onClick={() => setDashboardStatusFilter('NORMAL')}
-                  className={`py-1.5 rounded-xl text-[11px] font-bold border transition-all text-center ${
-                    dashboardStatusFilter === 'NORMAL'
+                  onClick={() => setDashboardStatusFilter('AVAILABLE')}
+                  className={`py-1.5 rounded-xl text-xs font-bold border transition-all text-center ${
+                    dashboardStatusFilter === 'AVAILABLE'
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
                       : 'border-emerald-200 bg-emerald-50 text-emerald-800'
                   }`}
                 >
-                  🟢 ปกติ ({normalStockItems.length})
+                  🟢 ยังมีอยู่ ({availableItems.length})
                 </button>
               </div>
             </div>
 
-            {/* รายการสินค้าบน Dashboard: กดเบิกไม่ได้ / เติมได้เฉพาะตัวที่ควรเติม */}
+            {/* รายการสินค้าบน Dashboard: แสดงเฉพาะปุ่มเติมในกลุ่มควรเติม / กดเบิกไม่ได้ */}
             <div className="space-y-1.5">
               {displayedDashboardItems.length === 0 ? (
                 <div className="bg-white py-10 rounded-2xl text-center border border-[#ebd5b3] px-4">
@@ -412,18 +399,14 @@ export default function Home() {
                 </div>
               ) : (
                 displayedDashboardItems.map((item) => {
-                  const isOut = item.quantity === 0;
-                  const isLow = item.quantity > 0 && item.quantity <= item.minStock;
-                  const isNormal = item.quantity > item.minStock;
+                  const isNeedsRefill = item.quantity <= item.minStock;
                   const neededAmount = Math.max(0, item.minStock - item.quantity);
 
                   return (
                     <div
                       key={item.id}
                       className={`bg-white rounded-xl p-2.5 border shadow-2xs transition-all ${
-                        isOut
-                          ? 'border-rose-200 bg-rose-50/20'
-                          : isLow
+                        isNeedsRefill
                           ? 'border-amber-200 bg-amber-50/20'
                           : 'border-[#ebd5b3]/70'
                       }`}
@@ -444,31 +427,27 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* ป้ายบอกสถานะชัดเจน */}
+                        {/* ป้ายบอกสถานะ: แค่ "ควรเติม" หรือ "ยังมีอยู่" */}
                         <div className="shrink-0 text-right">
-                          {isOut ? (
-                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
-                              ● หมดแล้ว
-                            </span>
-                          ) : isLow ? (
+                          {isNeedsRefill ? (
                             <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900">
                               ● ควรเติม
                             </span>
                           ) : (
                             <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800">
-                              ● ปกติ
+                              ● ยังมีอยู่
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* แถวล่าง: คงเหลือ + ปุ่มเติม (ทำได้แค่เติมสิ่งที่ควรเติม / กดเบิกไม่ได้) */}
+                      {/* แถวล่าง: คงเหลือ + ปุ่มเติม (มีเฉพาะตัวที่ควรเติม / กดเบิกไม่ได้) */}
                       <div className="mt-2 pt-1.5 border-t border-[#f5ecde] flex items-center justify-between gap-2">
                         <div className="flex items-baseline gap-1">
                           <span className="text-[11px] text-[#8a7263]">คงเหลือ:</span>
                           <span
                             className={`text-base font-extrabold leading-none ${
-                              isOut ? 'text-rose-600' : isLow ? 'text-amber-800' : 'text-[#2c1a0e]'
+                              isNeedsRefill ? 'text-amber-800' : 'text-[#2c1a0e]'
                             }`}
                           >
                             {item.quantity}
@@ -476,16 +455,16 @@ export default function Home() {
                           <span className="text-[11px] text-[#8a7263]">{item.unit}</span>
 
                           {/* แสดงข้อความบอกจำนวนที่ควรเติม */}
-                          {(isOut || isLow) && (
-                            <span className="text-[10px] font-semibold text-rose-700 ml-1">
+                          {isNeedsRefill && (
+                            <span className="text-[10px] font-semibold text-amber-900 ml-1">
                               (ขาด {neededAmount || 1})
                             </span>
                           )}
                         </div>
 
-                        {/* การกระทำ: เฉพาะตัวที่หมดหรือควรเติม ถึงจะมีปุ่มเติม / ตัวปกติจะแสดงว่าพร้อมขาย ไม่ต้องเติม */}
+                        {/* การกระทำ: เฉพาะตัวที่ควรเติม ถึงจะมีปุ่มเติม / ตัวที่ยังมีอยู่จะแสดงข้อความปกติ */}
                         <div>
-                          {isOut || isLow ? (
+                          {isNeedsRefill ? (
                             <button
                               onClick={() => {
                                 setSelectedProduct(item);
@@ -500,7 +479,7 @@ export default function Home() {
                             </button>
                           ) : (
                             <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                              ✓ พร้อมขาย
+                              ✓ ยังมีอยู่
                             </span>
                           )}
                         </div>
@@ -514,7 +493,7 @@ export default function Home() {
         )}
 
         {/* ========================================================= */}
-        {/* TAB 2: คลังสต็อก (สำหรับเบิกของ / เพิ่มของ / แก้ไขสต็อกเต็มรูปแบบ) */}
+        {/* TAB 2: คลังสต็อก (สำหรับเบิกของ / เติมของ / แก้ไขสต็อกเต็มรูปแบบ) */}
         {/* ========================================================= */}
         {activeTab === 'stock' && (
           <div className="space-y-2">
@@ -551,8 +530,7 @@ export default function Home() {
                 </div>
               ) : (
                 products.map((item) => {
-                  const isOutOfStock = item.quantity === 0;
-                  const isLowStock = item.quantity > 0 && item.quantity <= item.minStock;
+                  const isNeedsRefill = item.quantity <= item.minStock;
 
                   return (
                     <div
@@ -574,17 +552,13 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {isOutOfStock ? (
-                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-700 leading-none">
-                            ● หมด
-                          </span>
-                        ) : isLowStock ? (
+                        {isNeedsRefill ? (
                           <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 leading-none">
-                            ● ใกล้หมด
+                            ● ควรเติม
                           </span>
                         ) : (
                           <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 leading-none">
-                            ● ปกติ
+                            ● ยังมีอยู่
                           </span>
                         )}
                       </div>
